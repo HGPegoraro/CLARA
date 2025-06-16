@@ -1,3 +1,9 @@
+# Lista de Items dentro do APP CLARA 
+
+- `Selecionar Formato do Arquivo Excel`: Permite selecionar entre três métodos de leitura de placa, que deve ser escolhida pelo usuário de acordo com qual aparelho foi efetuado a obtenção dos dados da placa.
+
+- `Resposta Humoral / BCA`: Seleção entre as análises de `Resposta Humoral` e `BCA`.
+
 ### Dentro da aba `BCA`:
 
 - `Importar Excel`: Selecione as placas para serem analizadas, após isso os dados serão espelhados em uma placa contendo a identificação dos poços e suas concentrações.
@@ -13,5 +19,7 @@
 
 - `Nome da Amostra`: Onde o usuario define o nome da Amostra selecionada na placa, que é adicionado a placa após selecionar `Atribuir Amostra aos Selecionados`.
 
-- `Remover Atribuição`: 
+- `Remover Atribuição`: Remoção de poços Amostras atribuídas a um poço.
+
+- ``
 
