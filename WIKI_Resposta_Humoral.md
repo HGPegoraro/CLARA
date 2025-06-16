@@ -1,4 +1,4 @@
-# Lista de Items dentro do APP CLARA 
+# Lista de Items  
 
 - `Selecionar Formato do Arquivo Excel`: Permite selecionar entre três métodos de leitura de placa, que deve ser escolhida pelo usuário de acordo com qual aparelho foi efetuado a obtenção dos dados da placa.
 
