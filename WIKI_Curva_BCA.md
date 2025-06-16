@@ -1,4 +1,4 @@
-# Curva BCA:
+# Curva BCA
 
 - `Importar Excel`: Selecione as placas para serem analizadas, após isso os dados serão espelhados em uma placa contendo a identificação dos poços e suas concentrações.
 
