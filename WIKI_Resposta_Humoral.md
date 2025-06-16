@@ -1,10 +1,4 @@
-# Lista de Items  
-
-- `Selecionar Formato do Arquivo Excel`: Permite selecionar entre três métodos de leitura de placa, que deve ser escolhida pelo usuário de acordo com qual aparelho foi efetuado a obtenção dos dados da placa.
-
-- `Resposta Humoral / BCA`: Seleção entre as análises de `Resposta Humoral` e `BCA`.
-
-### Dentro da aba `Resposta Humoral`:
+# Resposta Humoral
 
 - `Importar Excel`: Selecione as placas para serem analizadas, após isso os dados serão espelhados em uma placa contendo a identificação dos poços e suas concentrações.
 
