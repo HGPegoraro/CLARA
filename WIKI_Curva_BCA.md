@@ -23,5 +23,7 @@
 
 - `Salvar Projeto`: Salvar atribuições efetuadas até aquele momento, permitindo resumir o trabalho com `Carregar Projeto Salvo`.
 
-- 
+- `Curva Padrão BCA`: Curva padrão desenhada a partir dos dados definidos na placa, com um sumário da `Regressão Linear`.
+
+- `Valores Interpolados (Por Amostra)`: Tabela com dados brutos das amostras e com o resultado da concentração definida na coluna `Conc. Interpolada (µg/mL)`
 
