@@ -2,7 +2,17 @@
 CLARA é um programa com objetivo de auxiliar na análise e visualização de gráficos de ELISA de Resposta Humoral e Curvas de BCA. O Script conta com diversas funcionalidades, separado por seções para facilitar a compreensão do usuário. Os arquivos denominados com prefixo `WIKI_` são correspondentes as funcionalidades de cada aba.
 #
 ### Usando o Script
-Faça download do Rtools
+
+Abra o WindowsPowershell para instalar os aplicativos de .R e RStudio.
+```
+winget install --id=RProject.R --version 4.5.1 -e && winget install --id=RStudio --version 2025.05.1+513  -e
+```
+
+Ainda no PowerShell faça download do arquivo `.zip`
+```
+git 
+```
+
 Após instalar o arquivo `.zip`, abra o arquivo `app.R` em RStudio e coloque no console:
 ```
 install.packages("shiny", "shinyjs", "readxl", "DT", "ggplot2", "dplyr", "jsonlite", "ggtext", "shinyWidgets",
