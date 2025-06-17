@@ -10,7 +10,7 @@ mkdir ..\Desktop\Analise_R
 
 1. Abra o WindowsPowershell para instalar os aplicativos de `.R`, `RStudio` e `Rtools`.
 ```
-winget install --id=RProject.R --version 4.5.1 -e && winget install --id=RStudio --version 2025.05.1+513  -e && winget install --id=RProject.Rtools --version 4.5.6608 -e
+winget install --id=RProject.R --version 4.5.1 -e; winget install --id=RStudio --version 2025.05.1+513  -e; winget install --id=RProject.Rtools --version 4.5.6608 -e
 ```
 
 >[!NOTE]
