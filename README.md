@@ -1,5 +1,5 @@
 # CLARA (Centralized Logic for Assay Reading and Analysis)
-CLARA é um programa com objetivo de auxiliar na análise e visualização de gráficos de ELISA de Resposta Humoral e Curvas de BCA. O Script conta com diversas funcionalidades, separado por seções para facilitar a compreensão do usuário. Os arquivos denominados com prefixo `WIKI_` são correspondentes as funcionalidades de cada aba.
+CLARA é um programa com objetivo de auxiliar na análise e visualização de gráficos de ELISA de Resposta Humoral e Curvas de BCA. O Script conta com diversas funcionalidades, separado por seções para facilitar a compreensão do usuário. A `Wiki` possui explicações para cada aba dentro do programa.
 #
 ### Usando o Script
 
