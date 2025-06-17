@@ -28,9 +28,7 @@ Expand-Archive -Path ..\Analise_R\CLARA.zip -DestinationPath ..\Analise_R
 
 4. Após extrair o arquivo `.zip`, abra o arquivo `app.R` em RStudio e coloque no console para posibilitar o funcionamento correto do script
 ```
-install.packages("shiny", "shinyjs", "readxl", "DT", "ggplot2", "dplyr", "jsonlite", "ggtext", "shinyWidgets",
-                 "digest", "tibble", "tidyr", "ggpattern", "emmeans", "multcomp", "multcompView", "jsonlite",
-                 "sortable", "ggtext", "commonmark", "shinyWidgets", "digest", "fBasics") 
+install.packages("shiny", "shinyjs", "readxl", "DT", "ggplot2", "dplyr", "jsonlite", "ggtext", "shinyWidgets", "digest", "tibble", "tidyr", "ggpattern", "emmeans", "multcomp", "multcompView", "jsonlite", "sortable", "ggtext", "commonmark", "shinyWidgets", "digest", "fBasics") 
 ```
 >[!NOTE]
 >Caso seja a primeira vez abrindo o `RStudio` será necessário algumas configurações adicionais dentro do aplicativo
