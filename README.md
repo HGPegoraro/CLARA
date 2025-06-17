@@ -12,7 +12,7 @@ winget install --id=RProject.R --version 4.5.1 -e && winget install --id=RStudio
 
 2. Ainda no PowerShell faça download do arquivo `.zip`
 ```
-git 
+In 
 ```
 
 3. Após instalar o arquivo `.zip`, abra o arquivo `app.R` em RStudio e coloque no console:
