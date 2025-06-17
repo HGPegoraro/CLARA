@@ -3,17 +3,19 @@ CLARA é um programa com objetivo de auxiliar na análise e visualização de gr
 #
 ### Usando o Script
 
-Abra o WindowsPowershell para instalar os aplicativos de .R e RStudio.
+Caso ainda não tenha o `RStudio` prossiga com passo 1, caso ja tenha instalado siga para o passo 3
+
+1. Abra o WindowsPowershell para instalar os aplicativos de .R e RStudio.
 ```
 winget install --id=RProject.R --version 4.5.1 -e && winget install --id=RStudio --version 2025.05.1+513  -e
 ```
 
-Ainda no PowerShell faça download do arquivo `.zip`
+2. Ainda no PowerShell faça download do arquivo `.zip`
 ```
 git 
 ```
 
-Após instalar o arquivo `.zip`, abra o arquivo `app.R` em RStudio e coloque no console:
+3. Após instalar o arquivo `.zip`, abra o arquivo `app.R` em RStudio e coloque no console:
 ```
 install.packages("shiny", "shinyjs", "readxl", "DT", "ggplot2", "dplyr", "jsonlite", "ggtext", "shinyWidgets",
                  "digest", "tibble", "tidyr", "ggpattern", "emmeans", "multcomp", "multcompView", "jsonlite",
