@@ -13,7 +13,7 @@ winget install --id=RProject.R --version 4.5.1 -e; winget install --id=RStudio -
 
 2. Cria um diretório, instala o `.zip` e abre a pasta contendo o aplicativo.
 ```
-$DesktopPATH = [System.Environment]::GetFolderPath('Desktop'); $ProjectPath = Join-Path -Path $DesktopPATH -ChildPath "Analise_R"; mkdir $ProjectPath -ErrorAction SilentlyContinue; $ZipFilePath = Join-Path -Path $ProjectPath -ChildPath "CLARA.zip"; Invoke-WebRequest -Uri https://raw.githubusercontent.com/HGPegoraro/CLARA/main/CLARA.zip -OutFile $ZipFilePath; Expand-Archive -Path $ZipFilePath -DestinationPath $ProjectPath -Force; cd (Join-Path -Path $ProjectPath -ChildPath "CLARA")
+$DesktopPATH = [System.Environment]::GetFolderPath('Desktop'); $ProjectPath = Join-Path -Path $DesktopPATH -ChildPath "Analise_R"; mkdir $ProjectPath -ErrorAction SilentlyContinue; $ZipFilePath = Join-Path -Path $ProjectPath -ChildPath "CLARA.zip"; Invoke-WebRequest -Uri https://raw.githubusercontent.com/HGPegoraro/CLARA/main/CLARA.zip -OutFile $ZipFilePath; Expand-Archive -Path $ZipFilePath -DestinationPath $ProjectPath -Force; cd (Join-Path -Path $ProjectPath -ChildPath "CLARA"); .\PATHfind.bat
 ```
 
 3. Após extrair o arquivo `.zip`, instale as bibliotecas necessárias.
@@ -23,7 +23,7 @@ Rscript install_lib_CLARA.R
 
 4. Inicialize o programa.
 ```
-Rscript app.R
+Rscript -e "shiny::runApp('app.R', launch.browser = TRUE)"
 ```
 
 >[!NOTE]
@@ -34,5 +34,3 @@ Rscript app.R
 - `Selecionar Formato do Arquivo Excel`: Permite selecionar entre três métodos de leitura de placa, que deve ser escolhida pelo usuário de acordo com qual aparelho foi efetuado a obtenção dos dados da placa.
 
 - `Resposta Humoral / BCA`: Seleção entre as análises de `Resposta Humoral` e `BCA`.
-
-Rscript -e "shiny::runApp('./Analise_R/CLARA/app.R', launch.browser = TRUE)"
