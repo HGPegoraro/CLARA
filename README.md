@@ -3,11 +3,6 @@ CLARA é um programa com objetivo de auxiliar na análise e visualização de gr
 #
 ### Usando o Script
 
-Crie um diretório onde sera instalado os aplicativos e efetue as próximas etapas dentro dele.
-```
-$DesktopPATH = [System.Environment]::GetFolderPath([System.Environment+SpecialFolder]::Desktop); $RPATH= Join-Path -Path $DesktopPATH -ChildPath Analise_R; mkdir $RPATH; cd ..\$DesktopPATH\Analise_R
-```
-
 1. Abra o WindowsPowershell para instalar os aplicativos de `.R`, `RStudio` e `Rtools`.
 ```
 winget install --id=RProject.R --version 4.5.1 -e; winget install --id=RStudio --version 2025.05.1+513  -e; winget install --id=RProject.Rtools --version 4.5.6608 -e
@@ -16,9 +11,9 @@ winget install --id=RProject.R --version 4.5.1 -e; winget install --id=RStudio -
 >[!NOTE]
 >Se já estiver com os aplicativos de `.R` instalados pode pular essa etapa
 
-2. Ainda no PowerShell faça download do arquivo `.zip`.
+2. Crie um diretório e instale o arquivo `.zip`
 ```
-Invoke-WebRequest -Uri https://raw.githubusercontent.com/HGPegoraro/CLARA/main/CLARA.zip -OutFile ..\Analise_R\CLARA.zip; Expand-Archive -Path ..\Analise_R\CLARA.zip -DestinationPath ..\Analise_R
+$DesktopPATH = [System.Environment]::GetFolderPath([System.Environment+SpecialFolder]::Desktop); $RPATH= Join-Path -Path $DesktopPATH -ChildPath Analise_R; mkdir $RPATH; cd $RPATH; Invoke-WebRequest -Uri https://raw.githubusercontent.com/HGPegoraro/CLARA/main/CLARA.zip -OutFile ..\Analise_R\CLARA.zip; Expand-Archive -Path ..\Analise_R\CLARA.zip -DestinationPath ..\Analise_R
 ```
 
 3. Após extrair o arquivo `.zip`, instale as bibliotecas necessárias.
