@@ -3,9 +3,9 @@ CLARA é um programa com objetivo de auxiliar na análise e visualização de gr
 #
 ### Usando o Script
 
-Crie um diretório onde sera instalado os aplicativos
+Crie um diretório onde sera instalado os aplicativos e efetue as próximas etapas dentro dele.
 ```
-mkdir ..\Desktop\Analise_R
+mkdir $Home\Desktop\Analise_R; cd ..\Analise_R
 ```
 
 1. Abra o WindowsPowershell para instalar os aplicativos de `.R`, `RStudio` e `Rtools`.
@@ -16,25 +16,24 @@ winget install --id=RProject.R --version 4.5.1 -e; winget install --id=RStudio -
 >[!NOTE]
 >Se já estiver com os aplicativos de `.R` instalados pode pular essa etapa
 
-2. Ainda no PowerShell faça download do arquivo `.zip`
+2. Ainda no PowerShell faça download do arquivo `.zip`.
 ```
-Invoke-WebRequest -Uri https://raw.githubusercontent.com/HGPegoraro/CLARA/main/CLARA.zip -OutFile ..\Analise_R\CLARA.zip
-```
-
-3. Faça a extração do .zip
-```
-Expand-Archive -Path ..\Analise_R\CLARA.zip -DestinationPath ..\Analise_R
+Invoke-WebRequest -Uri https://raw.githubusercontent.com/HGPegoraro/CLARA/main/CLARA.zip -OutFile ..\Analise_R\CLARA.zip; Expand-Archive -Path ..\Analise_R\CLARA.zip -DestinationPath ..\Analise_R
 ```
 
-4. Após extrair o arquivo `.zip`, abra o arquivo `app.R` em RStudio e coloque no console para posibilitar o funcionamento correto do script
+3. Após extrair o arquivo `.zip`, instale as bibliotecas necessárias.
 ```
-options(timeout = 300)
-install.packages(c("shiny", "shinyjs", "readxl", "DT", "ggplot2", "dplyr", "jsonlite", "ggtext", "shinyWidgets", "digest", "tibble", "tidyr", "ggpattern", "emmeans", "multcomp", "multcompView", "sortable", "commonmark", "fBasics"), dependencies = TRUE) 
+Rscript install_lib_CLARA.R
 ```
+
+4. Inicialize o programa.
+```
+Rscript app.R
+```
+
 >[!NOTE]
 >Caso seja a primeira vez abrindo o `RStudio` será necessário algumas configurações adicionais dentro do aplicativo
 
-Então para selecionar o aplicativo selecione a opção `Run App`, ou pressione `Ctrl + Shift + Enter`. Prossiga para a `WIKI` para entender a funcionalidade das abas.
 ### Lista de Items Gerais
 
 - `Selecionar Formato do Arquivo Excel`: Permite selecionar entre três métodos de leitura de placa, que deve ser escolhida pelo usuário de acordo com qual aparelho foi efetuado a obtenção dos dados da placa.
