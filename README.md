@@ -13,7 +13,7 @@ winget install --id=RProject.R --version 4.5.1 -e; winget install --id=RStudio -
 
 2. Crie um diretório, instale o `.zip` e abra o arquivo
 ```
-$DesktopPATH = [System.Environment]::GetFolderPath([System.Environment+SpecialFolder]::Desktop); $RPATH= Join-Path -Path $DesktopPATH -ChildPath Analise_R; Invoke-WebRequest -Uri https://raw.githubusercontent.com/HGPegoraro/CLARA/main/CLARA.zip -OutFile ..\Analise_R\CLARA.zip; Expand-Archive -Path ..\Analise_R\CLARA.zip -DestinationPath ..\Analise_R; cd ..\Analise_R\CLARA
+$DesktopPATH = [System.Environment]::GetFolderPath([System.Environment+SpecialFolder]::Desktop); $RPATH= Join-Path -Path $DesktopPATH -ChildPath Analise_R;cd ..\Analise_R; Invoke-WebRequest -Uri https://raw.githubusercontent.com/HGPegoraro/CLARA/main/CLARA.zip -OutFile ..\Analise_R\CLARA.zip; Expand-Archive -Path ..\Analise_R\CLARA.zip -DestinationPath ..\Analise_R; cd ..\Analise_R\CLARA
 ```
 
 3. Após extrair o arquivo `.zip`, instale as bibliotecas necessárias.
