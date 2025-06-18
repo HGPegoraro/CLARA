@@ -20,17 +20,8 @@ $DesktopPATH = [System.Environment]::GetFolderPath('Desktop'); $ProjectPath = Jo
 ```
 Rscript -e "shiny::runApp('app.R', launch.browser = TRUE)"
 ```
-
->[!NOTE]
->Caso seja a primeira vez abrindo o `RStudio` será necessário algumas configurações adicionais dentro do aplicativo
-
+#
 Para abrir o programa novamente após reiniciar o `Windows Powershell`
 ```
 $DesktopPATH = [System.Environment]::GetFolderPath('Desktop'); $ProjectPath = Join-Path -Path $DesktopPATH -ChildPath "Analise_R"; cd (Join-Path -Path $ProjectPath -ChildPath "CLARA"); Rscript -e "shiny::runApp('app.R', launch.browser = TRUE)"
 ```
-
-### Lista de Items Gerais
-
-- `Selecionar Formato do Arquivo Excel`: Permite selecionar entre três métodos de leitura de placa, que deve ser escolhida pelo usuário de acordo com qual aparelho foi efetuado a obtenção dos dados da placa.
-
-- `Resposta Humoral / BCA`: Seleção entre as análises de `Resposta Humoral` e `BCA`.
