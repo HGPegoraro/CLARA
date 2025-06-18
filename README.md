@@ -5,10 +5,7 @@ CLARA é um programa com objetivo de auxiliar na análise e visualização de gr
 
 Crie um diretório onde sera instalado os aplicativos e efetue as próximas etapas dentro dele.
 ```
-$DesktopPATH = [System.Environment]::GetFolderPath([System.Environment+SpecialFolder]::Desktop)
-$RPATH= Join-Path -Path $DesktopPATH -ChildPath Analise_R
-mkdir $RPATH
-cd ..\Analise_R
+$DesktopPATH = [System.Environment]::GetFolderPath([System.Environment+SpecialFolder]::Desktop); $RPATH= Join-Path -Path $DesktopPATH -ChildPath Analise_R; mkdir $RPATH; cd ..\Analise_R
 ```
 
 1. Abra o WindowsPowershell para instalar os aplicativos de `.R`, `RStudio` e `Rtools`.
