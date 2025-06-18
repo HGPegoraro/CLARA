@@ -34,3 +34,5 @@ Rscript app.R
 - `Selecionar Formato do Arquivo Excel`: Permite selecionar entre três métodos de leitura de placa, que deve ser escolhida pelo usuário de acordo com qual aparelho foi efetuado a obtenção dos dados da placa.
 
 - `Resposta Humoral / BCA`: Seleção entre as análises de `Resposta Humoral` e `BCA`.
+
+Rscript -e "shiny::runApp('./Analise_R/CLARA/app.R', launch.browser = TRUE)"
