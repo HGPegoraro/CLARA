@@ -3,7 +3,7 @@ CLARA é um programa com objetivo de auxiliar na análise e visualização de gr
 #
 ### Usando o Script
 
-1. Abra o WindowsPowershell para instalar os aplicativos de `.R`, `RStudio` e `Rtools`.
+1. Abra o `Windows Powershell` como `Administrador` para instalar os aplicativos de `.R`, `RStudio` e `Rtools`.
 ```
 winget install --id=RProject.R --version 4.5.1 -e; winget install --id=RStudio --version 2025.05.1+513  -e; winget install --id=RProject.Rtools --version 4.5.6608 -e; 
 ```
@@ -11,9 +11,9 @@ winget install --id=RProject.R --version 4.5.1 -e; winget install --id=RStudio -
 >[!NOTE]
 >Se já estiver com os aplicativos de `.R` instalados pode pular essa etapa
 
-2. Crie um diretório, instale o `.zip` e abra o arquivo
+2. Cria um diretório, instala o `.zip` e abre a pasta contendo o aplicativo.
 ```
-$DesktopPATH = [System.Environment]::GetFolderPath([System.Environment+SpecialFolder]::Desktop); $RPATH= Join-Path -Path $DesktopPATH -ChildPath Analise_R;cd ..\Analise_R; Invoke-WebRequest -Uri https://raw.githubusercontent.com/HGPegoraro/CLARA/main/CLARA.zip -OutFile ..\Analise_R\CLARA.zip; Expand-Archive -Path ..\Analise_R\CLARA.zip -DestinationPath ..\Analise_R; cd ..\Analise_R\CLARA
+$DesktopPATH = [System.Environment]::GetFolderPath('Desktop'); $ProjectPath = Join-Path -Path $DesktopPATH -ChildPath "Analise_R"; mkdir $ProjectPath -ErrorAction SilentlyContinue; $ZipFilePath = Join-Path -Path $ProjectPath -ChildPath "CLARA.zip"; Invoke-WebRequest -Uri https://raw.githubusercontent.com/HGPegoraro/CLARA/main/CLARA.zip -OutFile $ZipFilePath; Expand-Archive -Path $ZipFilePath -DestinationPath $ProjectPath -Force; cd (Join-Path -Path $ProjectPath -ChildPath "CLARA")
 ```
 
 3. Após extrair o arquivo `.zip`, instale as bibliotecas necessárias.
