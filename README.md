@@ -11,17 +11,12 @@ winget install --id=RProject.R --version 4.5.1 -e; winget install --id=RStudio -
 >[!NOTE]
 >Se já estiver com os aplicativos de `.R` instalados pode pular essa etapa
 
-2. Cria um diretório, instala o `.zip` e abre a pasta contendo o aplicativo.
+2. Cria um diretório, instala o `.zip`, abre a pasta contendo o aplicativo e instala as bibliotecas necessárias.
 ```
-$DesktopPATH = [System.Environment]::GetFolderPath('Desktop'); $ProjectPath = Join-Path -Path $DesktopPATH -ChildPath "Analise_R"; mkdir $ProjectPath -ErrorAction SilentlyContinue; $ZipFilePath = Join-Path -Path $ProjectPath -ChildPath "CLARA.zip"; Invoke-WebRequest -Uri https://raw.githubusercontent.com/HGPegoraro/CLARA/main/CLARA.zip -OutFile $ZipFilePath; Expand-Archive -Path $ZipFilePath -DestinationPath $ProjectPath -Force; cd (Join-Path -Path $ProjectPath -ChildPath "CLARA"); .\PATHfind.bat
-```
-
-3. Após extrair o arquivo `.zip`, instale as bibliotecas necessárias.
-```
-Rscript install_lib_CLARA.R
+$DesktopPATH = [System.Environment]::GetFolderPath('Desktop'); $ProjectPath = Join-Path -Path $DesktopPATH -ChildPath "Analise_R"; mkdir $ProjectPath -ErrorAction SilentlyContinue; $ZipFilePath = Join-Path -Path $ProjectPath -ChildPath "CLARA.zip"; Invoke-WebRequest -Uri https://raw.githubusercontent.com/HGPegoraro/CLARA/main/CLARA.zip -OutFile $ZipFilePath; Expand-Archive -Path $ZipFilePath -DestinationPath $ProjectPath -Force; cd (Join-Path -Path $ProjectPath -ChildPath "CLARA"); .\PATHfind.bat; Rscript install_lib_CLARA.R
 ```
 
-4. Inicialize o programa.
+3. Inicialize o programa.
 ```
 Rscript -e "shiny::runApp('app.R', launch.browser = TRUE)"
 ```
