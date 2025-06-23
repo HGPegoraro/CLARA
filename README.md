@@ -6,12 +6,15 @@ CLARA é um programa com objetivo de auxiliar na análise e visualização de gr
 
 1. Abra o `Windows Powershell` como `Administrador` para instalar os aplicativos de `.R`, `RStudio` e `Rtools`.
 ```
-winget install --id=RProject.R --version 4.5.1 -e; winget install --id=Posit.RStudio --version 2025.05.1+513  -e; winget install --id=RProject.Rtools --version 4.5.6608 -e; 
+winget install --id=RProject.R --version 4.5.1 -e; winget install --id=Posit.RStudio --version 2025.05.1+513  -e; winget install --id=RProject.Rtools --version 4.5.6608 -e 
 
 ```
 
 >[!NOTE]
->Se já estiver com os aplicativos de `.R` instalados pode pular essa etapa
+>Se já estiver com os aplicativos de `.R` baixados, instale somente o `Rtools`
+>```
+> winget install --id=RProject.Rtools --version 4.5.6608 -e
+>``` 
 
 2. Cria um diretório, instala o `.zip`, abre a pasta contendo o aplicativo e instala as bibliotecas necessárias.
 ```
