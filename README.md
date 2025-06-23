@@ -1,4 +1,5 @@
-# CLARA (Centralized Logic for Assay Reading and Analysis)
+![CLARA_LOGO_V2](https://github.com/user-attachments/assets/03f2881b-700e-430e-9701-a61838e97c06)
+#
 CLARA é um programa com objetivo de auxiliar na análise e visualização de gráficos de ELISA de Resposta Humoral e Curvas de BCA. O Script conta com diversas funcionalidades, separado por seções para facilitar a compreensão do usuário. A `Wiki` possui explicações para cada aba dentro do programa.
 #
 ### Usando o Script
@@ -6,6 +7,7 @@ CLARA é um programa com objetivo de auxiliar na análise e visualização de gr
 1. Abra o `Windows Powershell` como `Administrador` para instalar os aplicativos de `.R`, `RStudio` e `Rtools`.
 ```
 winget install --id=RProject.R --version 4.5.1 -e; winget install --id=RStudio --version 2025.05.1+513  -e; winget install --id=RProject.Rtools --version 4.5.6608 -e; 
+
 ```
 
 >[!NOTE]
