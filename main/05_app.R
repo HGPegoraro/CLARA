@@ -1,6 +1,10 @@
 library(shiny)
 library(shinyjs)
 
+source("02_excel_utils.R")
+source("03_elisa_module.R")
+source("04_bca_module.R")
+
 options(shiny.maxRequestSize = 30 * 1024^2)
 
 ui <- fluidPage(
@@ -32,11 +36,11 @@ ui <- fluidPage(
   hr(),
   fluidRow(
     column(6,
-           selectInput("global_excel_format_selector", "Selecionar Formato do Arquivo Excel:",
+           selectInput("global_excel_format_selector", "Select Excel format:",
                        choices = list(
-                         "ELx800 (Lab. 3)" = "lab_3",
-                         "Biochrom EZ Read 400 (Lab. 6)" = "lab_6",
-                         "KASUAKI (Lab. 7)" = "lab_7"
+                         "ELx800" = "lab_3",
+                         "Biochrom EZ Read 400" = "lab_6",
+                         "KASUAKI" = "lab_7"
                        ),
                        selected = "lab_3")
     )
