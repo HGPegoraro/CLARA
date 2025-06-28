@@ -1,0 +1,15 @@
+Package: CLARA
+Title: Centralized logic for assay reading and analysis
+Version: 1.0
+Authors@R: 
+    person("Henrique", "Pegoraro", , "henrique.pegoraro2@gmail.com", role = c("aut", "cre"))
+Description: CLARA is a program designed to assist in the analysis and visualization of ELISA graphs for humoral response and BCA curves.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.2
+Imports: 
+"shiny", "shinyjs", "readxl", "DT", "ggplot2", "dplyr",
+"jsonlite", "ggtext", "shinyWidgets", "digest", "tibble",
+"tidyr", "ggpattern", "emmeans", "multcomp", "multcompView",
+"sortable", "commonmark", "fBasics", "afex", "rstatix", "dunn.test"
