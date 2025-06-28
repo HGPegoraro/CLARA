@@ -6,7 +6,7 @@ CLARA is a program designed to assist in the analysis and visualization of ELISA
 
 1. Open Windows `PowerShell` as an administrator to install the `.R`, `RStudio`, and `Rtools` applications
 ```
-winget install --id=RProject.R --version 4.5.1 -e; winget install --id=Posit.RStudio --version 2025.05.1+513  -e; winget install --id=RProject.Rtools --version 4.5.6608 -e 
+winget install --id=RProject.R --version 4.5.1 -e --wait; winget install --id=Posit.RStudio --version 2025.05.1+513  -e --wait; winget install --id=RProject.Rtools --version 4.5.6608 -e --wait
 
 ```
 
