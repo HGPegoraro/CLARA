@@ -28,5 +28,5 @@ Rscript -e "shiny::runApp('05_app.R', launch.browser = TRUE)"
 #
 To open the program again after closing `Windows Powershell`
 ```
-$DesktopPATH = [System.Environment]::GetFolderPath('Desktop'); $ProjectPath = Join-Path -Path $DesktopPATH -ChildPath "Analise_R"; cd (Join-Path -Path $ProjectPath -ChildPath "CLARA-main"); Rscript -e "shiny::runApp('05_app.R', launch.browser = TRUE)"
+$DesktopPATH = [System.Environment]::GetFolderPath('Desktop'); $ProjectPath = Join-Path -Path $DesktopPATH -ChildPath "Analise_R"; cd (Join-Path -Path $ProjectPath -ChildPath "CLARA-main"); cd .\main; Rscript -e "shiny::runApp('05_app.R', launch.browser = TRUE)"
 ```
