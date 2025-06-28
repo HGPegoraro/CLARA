@@ -18,15 +18,15 @@ winget install --id=RProject.R --version 4.5.1 -e; winget install --id=Posit.RSt
 
 2. Creates a `Analise_R` directory, installs the `.zip`, opens that directory containing the application and installs necessary libraries
 ```
-$DesktopPATH = [System.Environment]::GetFolderPath('Desktop'); $ProjectPath = Join-Path -Path $DesktopPATH -ChildPath "Analise_R"; mkdir $ProjectPath -ErrorAction SilentlyContinue; $ZipFilePath = Join-Path -Path $ProjectPath -ChildPath "CLARA.zip"; Invoke-WebRequest -Uri https://github.com/HGPegoraro/CLARA/archive/refs/heads/main.zip -OutFile $ZipFilePath; Expand-Archive -Path $ZipFilePath -DestinationPath $ProjectPath -Force; cd (Join-Path -Path $ProjectPath -ChildPath "CLARA"); cd .\main; Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process; .\SETUP_CLARA.ps1
+$DesktopPATH = [System.Environment]::GetFolderPath('Desktop'); $ProjectPath = Join-Path -Path $DesktopPATH -ChildPath "Analise_R"; mkdir $ProjectPath -ErrorAction SilentlyContinue; $ZipFilePath = Join-Path -Path $ProjectPath -ChildPath "CLARA.zip"; Invoke-WebRequest -Uri https://github.com/HGPegoraro/CLARA/archive/refs/heads/main.zip -OutFile $ZipFilePath; Expand-Archive -Path $ZipFilePath -DestinationPath $ProjectPath -Force; cd (Join-Path -Path $ProjectPath -ChildPath "CLARA-main"); cd .\main; Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process; .\SETUP_CLARA.ps1
 ```
 
 3. Runs the program.
 ```
-Rscript -e "shiny::runApp('app.R', launch.browser = TRUE)"
+Rscript -e "shiny::runApp('05_app.R', launch.browser = TRUE)"
 ```
 #
 To open the program again after closing `Windows Powershell`
 ```
-$DesktopPATH = [System.Environment]::GetFolderPath('Desktop'); $ProjectPath = Join-Path -Path $DesktopPATH -ChildPath "Analise_R"; cd (Join-Path -Path $ProjectPath -ChildPath "CLARA"); Rscript -e "shiny::runApp('app.R', launch.browser = TRUE)"
+$DesktopPATH = [System.Environment]::GetFolderPath('Desktop'); $ProjectPath = Join-Path -Path $DesktopPATH -ChildPath "Analise_R"; cd (Join-Path -Path $ProjectPath -ChildPath "CLARA"); Rscript -e "shiny::runApp('05_app.R', launch.browser = TRUE)"
 ```
