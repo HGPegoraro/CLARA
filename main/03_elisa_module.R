@@ -184,7 +184,6 @@ elisa_server <- function(id, global_excel_format_reactive) {
     plots_config <- reactiveVal(list())
     data_for_normality_check <- reactiveVal(NULL)
 
-    # *** FIX 1: Create a server-side reactiveVal to hold the selection state ***
     selected_groups_rv <- reactiveVal(character(0))
 
     analysis_days <- reactiveVal(c("Day 0", "Day 21", "Day 42"))
@@ -215,10 +214,9 @@ elisa_server <- function(id, global_excel_format_reactive) {
       }
     })
 
-    # *** FIX 2: Make the dynamic plot parameters depend on our reliable server-side reactiveVal ***
     dynamic_plot_params <- reactive({
       list(
-        groups = selected_groups_rv(), # Read from our server-side value
+        groups = selected_groups_rv(),
         order = input$group_order,
         test = if (!is.null(input$test_filter) && input$test_filter != "All") input$test_filter else NULL,
         ymax = if (is.na(input$ymax_dynamic_input) || !is.numeric(input$ymax_dynamic_input) || input$ymax_dynamic_input <= 0) NULL else input$ymax_dynamic_input,
@@ -228,11 +226,9 @@ elisa_server <- function(id, global_excel_format_reactive) {
       )
     })
 
-    # *** FIX 3: Keep the server-side value and the UI input in sync ***
-    # When the user changes the picker, update our server-side value.
     observeEvent(input$plot_groups, {
       selected_groups_rv(input$plot_groups)
-    }, ignoreNULL = FALSE) # ignoreNULL=FALSE is crucial to handle de-selecting all groups
+    }, ignoreNULL = FALSE)
 
     italicize_markdown <- function(text) {
       sapply(text, function(t) {
@@ -325,17 +321,15 @@ elisa_server <- function(id, global_excel_format_reactive) {
 
       if (length(pure_group_names) == 0) {
         safe_update_plot_groups(session, NULL, NULL, character(0))
-        selected_groups_rv(character(0)) # Update server-side value
+        selected_groups_rv(character(0))
         return()
       }
 
-      # For a dynamic plot, it's most intuitive to select all available groups by default
       selection_to_use <- pure_group_names
 
       labels_for_display <- lapply(italicize_markdown(orig_group_names), HTML)
       choices_list_new <- stats::setNames(pure_group_names, labels_for_display)
 
-      # Update the UI and the server-side value simultaneously
       safe_update_plot_groups(session, choices_list_new, selection_to_use, pure_group_names)
       selected_groups_rv(selection_to_use)
     }
@@ -372,7 +366,6 @@ elisa_server <- function(id, global_excel_format_reactive) {
 
     observeEvent(input$files, {
       req(input$files)
-      # ... (rest of the file loading logic is unchanged)
       current_global_format_id <- global_excel_format_reactive()
       req(current_global_format_id)
 
@@ -424,7 +417,6 @@ elisa_server <- function(id, global_excel_format_reactive) {
                           choices = if(length(available_plates_in_module) > 0) setNames(available_plates_in_module, available_plates_in_module) else list("No Plate available" = "NA"),
                           selected = new_selected_plate)
 
-        # Explicitly update groups after loading files
         update_plot_groups()
       }
     })
@@ -525,7 +517,6 @@ elisa_server <- function(id, global_excel_format_reactive) {
 
     observeEvent(input$load_state, {
       req(input$load_state)
-      # ... (rest of load state logic is unchanged)
       loaded_state <- tryCatch(readRDS(input$load_state$datapath), error = function(e) { showNotification(paste("Error reading RDS:", e$message), type="error"); NULL })
 
       expected_fields <- c("files", "colors", "order", "plots")
@@ -686,7 +677,6 @@ elisa_server <- function(id, global_excel_format_reactive) {
                                          analysis_method_param = "mixed_anova",
                                          signif_style_param = "letters") {
 
-      # ... (internal plot generation logic is unchanged and correct)
       cat("\n\n=========================================================\n")
       cat("--- GRAPH GENERATION:", plot_title_input, "---\n")
       cat("--- ANALYSIS METHOD:", toupper(analysis_method_param), "| STYLE:", toupper(signif_style_param), "---\n")
@@ -757,18 +747,18 @@ elisa_server <- function(id, global_excel_format_reactive) {
               stat.test <- as.data.frame(cld) %>%
                 dplyr::select(Day, PureGroup, .group) %>% dplyr::rename(Signif = .group) %>%
                 mutate(Signif = trimws(Signif))
-            } else { # asterisks
+            } else {
               stat.test <- as.data.frame(summary(emm$contrasts)) %>%
                 dplyr::select(Day, contrast, p.value) %>%
                 tidyr::separate(contrast, into = c("group1", "group2"), sep = " - ", remove = TRUE)
             }
-          } else { # Oneway ANOVA or Kruskal-Wallis
+          } else {
             stat.test <- plot_data_for_analysis %>%
               group_by(Day) %>%
               do(
                 if (analysis_method_param == "anova_per_day") {
                   rstatix::tukey_hsd(aov(Value ~ PureGroup, data = .))
-                } else { # kruskal_per_day
+                } else {
                   dunn_result <- dunn.test::dunn.test(.$Value, .$PureGroup, method = "bh", list = TRUE, alpha = 0.05)
                   data.frame(
                     group1 = sapply(strsplit(dunn_result$comparisons, " - "), `[`, 1),
@@ -862,7 +852,7 @@ elisa_server <- function(id, global_excel_format_reactive) {
                                                      vjust = -0.5, size = 5, fontface = "bold", na.rm = TRUE, show.legend = FALSE)
           }
 
-        } else { # asterisks
+        } else {
           p_col_name <- if("p.adj" %in% names(stat.test)) "p.adj" else "p.value"
           stat.test_filtered <- stat.test %>% filter(.data[[p_col_name]] < 0.05)
 
@@ -919,7 +909,6 @@ elisa_server <- function(id, global_excel_format_reactive) {
     }
 
     output$normality_controls_ui <- renderUI({
-      # ... (normality controls logic is unchanged)
       data <- data_for_normality_check()
       req(data)
       available_days <- unique(as.character(data$Day))
@@ -931,7 +920,6 @@ elisa_server <- function(id, global_excel_format_reactive) {
     })
 
     observeEvent(input$run_normality_check, {
-      # ... (normality check logic is unchanged)
       req(input$day_for_normality)
       all_data_norm <- data_for_normality_check()
       req(all_data_norm)
@@ -996,7 +984,6 @@ elisa_server <- function(id, global_excel_format_reactive) {
     })
 
     get_corrected_data <- function() {
-      # ... (get corrected data logic is unchanged)
       corrected_data_list <- lapply(names(all_data$files), function(fname) {
         plate_data <- all_data$files[[fname]]
         if (is.null(plate_data$wells) || nrow(plate_data$wells) == 0) return(NULL)
@@ -1028,9 +1015,7 @@ elisa_server <- function(id, global_excel_format_reactive) {
     output$dynamic_plot <- renderPlot({
       current_plot_params <- dynamic_plot_params()
 
-      # This check is now reliable because it uses the server-side reactiveVal
       if(is.null(current_plot_params$groups) || length(current_plot_params$groups) == 0){
-        # Use a more robust way to display messages than `+ title()`
         plot.new()
         text(0.5, 0.5, "No Group Selected.", cex = 1.2)
         return()
