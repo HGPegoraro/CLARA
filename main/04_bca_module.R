@@ -7,9 +7,19 @@ library(dplyr)
 library(jsonlite)
 library(ggtext)
 library(shinyWidgets)
+library(colourpicker)
 library(digest)
 library(tibble)
 library(tidyr)
+library(car)
+library(DescTools)
+library(effectsize)
+library(effsize)
+library(ggpubr)
+library(pwr)
+library(RColorBrewer)
+library(viridis)
+library(plotly)
 
 bca_tabPanel <- function(id, name = "BCA Curve") {
   ns <- NS(id)
@@ -37,7 +47,8 @@ bca_tabPanel <- function(id, name = "BCA Curve") {
         const well_id = $(this).data('well');
 
         if (standardWells_bca.includes(well_id)) {
-            Shiny.setInputValue(toggledStdWellInputId_bca, { well: well_id, ts: new Date().getTime() }, {priority: 'event'});
+            // Standard well interaction: Ctrl+click disregards, regular click unassigns
+            Shiny.setInputValue(toggledStdWellInputId_bca, { well: well_id, ts: new Date().getTime(), ctrlKey: e.ctrlKey }, {priority: 'event'});
             return false;
         } else {
             isMouseDown_bca = true;
@@ -73,6 +84,17 @@ bca_tabPanel <- function(id, name = "BCA Curve") {
            useShinyjs(),
            tags$head(
              tags$style(HTML("
+                .bca-outer-wrapper { display: flex; flex-direction: row; align-items: flex-start; width: 100%; margin: 0; padding: 0; }
+                .sidebar-tabs-container { width: 50px; min-width: 50px; background: #f0f0f0; border-right: 1px solid #ddd; display: flex; flex-direction: column; z-index: 1000; height: 100vh; position: sticky; top: 0; }
+                .sidebar-tab-button { width: 50px; height: 85px; background: #007bff; color: white; border: 1px solid #0056b3; cursor: pointer; font-weight: bold; writing-mode: vertical-rl; text-orientation: mixed; display: flex; align-items: center; justify-content: center; padding: 5px; font-size: 18px; margin-bottom: 5px; }
+                .sidebar-tab-button:hover { background: #0056b3; }
+                .sidebar-tab-button i { font-size: 24px; }
+                .left-sidebar-container { width: 320px; min-width: 320px; max-height: 100vh; background: #f5f5f5; border-right: 1px solid #ddd; overflow-y: auto; z-index: 999; padding: 15px; box-sizing: border-box; display: none; position: sticky; top: 0; }
+                .left-sidebar-container.open { display: block; }
+                .sidebar-title { font-size: 18px; font-weight: 700; margin-bottom: 15px; }
+                .left-sidebar-container .sidebar-title { font-size: 18px; font-weight: 700; }
+                .left-sidebar-container label, .left-sidebar-container .form-group label { font-size: 13px; }
+                .bca-main-content { flex-grow: 1; padding: 15px; min-width: 0; }
                 .well-plate { border-collapse: collapse; margin: 10px 0; }
                 .well-cell {
                   border: 1px solid #ccc; width: 65px; height: 60px;
@@ -104,47 +126,58 @@ bca_tabPanel <- function(id, name = "BCA Curve") {
               ")),
              tags$script(HTML(estilo_js_bca))
            ),
-           sidebarLayout(
-             sidebarPanel(
-               fileInput(ns("files"), "Import Excel", multiple = TRUE, accept = ".xlsx, .xls"),
-               selectInput(ns("selected_plate"), "Select Plate", choices = list("No Plate Available" = "NA")),
-               hr(),
-
-               div(id = ns("toggle_std_config"),
-                   h4(strong("Definition of Standard Curve"), icon("chevron-down"))
+           div(class = "bca-outer-wrapper",
+               div(class = "sidebar-tabs-container", id = NS(id, "sidebar_tabs_container"),
+                   actionButton(NS(id, "toggle_config_sidebar"), icon("sliders"), class = "sidebar-tab-button", title = "Configuration")
                ),
-               div(id = ns("std_config_content"),
-                   uiOutput(ns("standards_config_ui")),
+               div(class = "left-sidebar-container", id = NS(id, "config_sidebar_panel"),
+                   div(style = "display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;", 
+                       h5("Configuration", class = "sidebar-title"), actionButton(NS(id, "close_config_sidebar"), "✕", class = "btn-sm")),
+                   fileInput(ns("files"), "Import Excel", multiple = TRUE, accept = ".xlsx, .xls"),
+                   selectInput(ns("selected_plate"), "Select Plate", choices = list("No Plate Available" = "NA")),
+                   hr(),
+                   div(id = ns("toggle_std_config"),
+                       h4(strong("Definition of Standard Curve"), icon("chevron-down"))
+                   ),
+                   div(id = ns("std_config_content"),
+                       uiOutput(ns("standards_config_ui")),
+                       fluidRow(
+                         column(6, actionButton(ns("add_std_point"), "Add Point", icon = icon("plus"), width = "100%")),
+                         column(6, actionButton(ns("clear_ignored_stds"), "Restore Ignored", width = "100%"))
+                       )
+                   ),
+                   hr(),
+                   h4(strong("Sample Atribution")),
+                   textInput(ns("sample_name"), "Sample Name", placeholder = "Ex: PLD"),
+                   actionButton(ns("add_sample"), "Assign Sample to Selected"),
+                   actionButton(ns("remove_from_sample"), "Remove Assignment", icon = icon("eraser")),
+                   hr(),
                    fluidRow(
-                     column(6, actionButton(ns("add_std_point"), "Add Point", icon = icon("plus"), width = "100%")),
-                     column(6, actionButton(ns("clear_ignored_stds"), "Restore Ignored", width = "100%"))
+                     column(8, fileInput(ns("load_state"), "Load Saved Project (.rds)", accept = ".rds")),
+                     column(4, downloadButton(ns("save_state"), "Save Project"))
                    )
                ),
-
-               hr(),
-               h4(strong("Sample Atribution")),
-               textInput(ns("sample_name"), "Sample Name", placeholder = "Ex: PLD"),
-               actionButton(ns("add_sample"), "Assign Sample to Selected"),
-               actionButton(ns("remove_from_sample"), "Remove Assignment", icon = icon("eraser")),
-               hr(),
-               fluidRow(
-                 column(8, fileInput(ns("load_state"), "Load Saved Project (.rds)", accept = ".rds")),
-                 column(4, downloadButton(ns("save_state"), "Save Project"))
+               div(class = "bca-main-content", id = NS(id, "main_content"),
+                   h4(strong("96 Well Plate")),
+                   uiOutput(ns("plate_ui")),
+                   hr(),
+                   h4(strong("BCA Standard Curve")),
+                   uiOutput(ns("std_curve_ui")),
+                   verbatimTextOutput(ns("std_curve_summary")),
+                   hr(),
+                   h4("Interpolated Values (Per Sample)"),
+                   DTOutput(ns("interpolated_values_table"))
                )
-             ),
-             mainPanel(
-               h4(strong("96 Well Plate")),
-               uiOutput(ns("plate_ui")),
-               hr(),
-               h4(strong("BCA Standard Curve")),
-               plotOutput(ns("std_curve_plot")),
-               verbatimTextOutput(ns("std_curve_summary")),
-               hr(),
-               h4("Interpolated Values (Per Sample)"),
-               DTOutput(ns("interpolated_values_table"))
-             )
+           ),
+           tags$script(HTML(sprintf("
+             $(document).ready(function() {
+               var configPanel = $('#%s');
+               function reset() { configPanel.removeClass('open'); }
+               $('#%s').on('click', function() { let o = configPanel.hasClass('open'); reset(); if(!o) configPanel.addClass('open'); });
+               $('#%s').on('click', reset);
+             });
+           ", ns("config_sidebar_panel"), ns("toggle_config_sidebar"), ns("close_config_sidebar"))))
            )
-  )
 }
 
 
@@ -168,6 +201,10 @@ bca_server <- function(id, global_excel_format_reactive) {
             icon.removeClass('fa-chevron-up').addClass('fa-chevron-down');
           }
         ", ns("toggle_std_config")))
+    })
+
+    observeEvent(input$close_config_sidebar, {
+      runjs(sprintf("$('#%s').removeClass('open');", ns("config_sidebar_panel")))
     })
 
     current_file <- reactive({ input$selected_plate })
@@ -278,21 +315,40 @@ bca_server <- function(id, global_excel_format_reactive) {
       req(current_file(), current_file() != "NA", input$toggled_std_well$well)
       fname <- current_file()
       toggled_well <- input$toggled_std_well$well
+      is_ctrl_key <- isTRUE(input$toggled_std_well$ctrlKey)
 
-      current_ignored_list <- ignored_standard_wells_all_plates()
-
-      if (is.null(current_ignored_list[[fname]])) {
-        current_ignored_list[[fname]] <- character(0)
-      }
-
-      if (toggled_well %in% current_ignored_list[[fname]]) {
-        current_ignored_list[[fname]] <- setdiff(current_ignored_list[[fname]], toggled_well)
-        showNotification(paste("Standard Well", toggled_well, "Restored to the Curve"), type="message", duration=2)
+      if (is_ctrl_key) {
+        # Ctrl+click: Disregard (ignore) the standard well from the curve
+        current_ignored_list <- ignored_standard_wells_all_plates()
+        if (is.null(current_ignored_list[[fname]])) {
+          current_ignored_list[[fname]] <- character(0)
+        }
+        
+        if (toggled_well %in% current_ignored_list[[fname]]) {
+          current_ignored_list[[fname]] <- setdiff(current_ignored_list[[fname]], toggled_well)
+          showNotification(paste("Standard Well", toggled_well, "Restored to the Curve"), type="message", duration=2)
+        } else {
+          current_ignored_list[[fname]] <- unique(c(current_ignored_list[[fname]], toggled_well))
+          showNotification(paste("Standard Well", toggled_well, "Ignored from the Curve"), type="warning", duration=2)
+        }
+        ignored_standard_wells_all_plates(current_ignored_list)
       } else {
-        current_ignored_list[[fname]] <- unique(c(current_ignored_list[[fname]], toggled_well))
-        showNotification(paste("Standard Well", toggled_well, "Ignored from the Curve"), type="warning", duration=2)
+        # Regular click: Unassign the well from the standard curve point
+        current_config <- standards_config()
+        
+        # Find which point this well is assigned to
+        for (i in seq_len(nrow(current_config))) {
+          wells_in_point <- current_config$wells[[i]]
+          if (toggled_well %in% wells_in_point) {
+            # Remove this well from the point
+            new_wells <- setdiff(wells_in_point, toggled_well)
+            current_config$wells[i] <- list(new_wells)
+            standards_config(current_config)
+            showNotification(paste("Well", toggled_well, "unassigned from standard curve"), type="message", duration=2)
+            break
+          }
+        }
       }
-      ignored_standard_wells_all_plates(current_ignored_list)
     })
 
     observeEvent(input$clear_ignored_stds, {
@@ -367,17 +423,24 @@ bca_server <- function(id, global_excel_format_reactive) {
       all_data$files[[fname_logic]]$standard_curve_fit <- fit
       all_data$files[[fname_logic]]$standard_curve_data_points <- std_curve_data_for_fit
 
-      output$std_curve_plot <- renderPlot({
+      # prepare plotly output only - simplified curve visualization
+      if (TRUE) {
         req(fit)
-        ggplot(std_curve_data_for_fit, aes(x = Concentration, y = AbsorbanciaMedia)) +
-          geom_smooth(method = "lm", se = FALSE, color = "red", formula = y ~ x) +
-          geom_point(color = "blue", size = 3, na.rm = TRUE) +
-          labs(title = paste("BCA Standard Curve - Plate:", fname_logic),
-               x = "Concentration (µg/µL)",
-               y = "Average Absorbance") +
-          theme_minimal(base_size = 14) +
-          theme(plot.title = element_text(hjust = 0.5))
-      })
+        
+        # Use clean, professional colors for BCA curve
+        pt_col <- "#1f77b4"
+        line_col <- "#d62728"
+
+        p_std <- ggplot(std_curve_data_for_fit, aes(x = Concentration, y = AbsorbanciaMedia)) +
+          geom_smooth(method = "lm", se = FALSE, color = line_col, size = 1, formula = y ~ x) +
+          geom_point(color = pt_col, size = 3, na.rm = TRUE) +
+          labs(title = paste("BCA Standard Curve - Plate:", fname_logic), x = "Concentration (µg/µL)", y = "Average Absorbance") +
+          theme_minimal(base_size = 14) + theme(plot.title = element_text(hjust = 0.5))
+
+        output$std_curve_plotly <- plotly::renderPlotly({ ggplotly(p_std, tooltip = c("x", "y")) %>% 
+          config(displayModeBar = TRUE, modeBarButtonsToRemove = list("pan2d", "lasso2d", "resetScale2d")) })
+        output$std_curve_ui <- renderUI({ plotly::plotlyOutput(ns("std_curve_plotly")) })
+      }
 
       output$std_curve_summary <- renderPrint({
         req(fit)

@@ -4,6 +4,7 @@ library(shinyjs)
 source("02_excel_utils.R")
 source("03_elisa_module.R")
 source("04_bca_module.R")
+source("06_mtt_module.R")
 
 options(shiny.maxRequestSize = 30 * 1024^2)
 
@@ -49,6 +50,7 @@ ui <- fluidPage(
     id = "main_tabs",
     elisa_tabPanel("elisa_module"),
     bca_tabPanel("bca_module")
+    , mtt_tabPanel("mtt_module")
   ),
   hr()
 )
@@ -59,6 +61,7 @@ server <- function(input, output, session) {
 
   elisa_server("elisa_module", global_excel_format_reactive = selected_global_excel_format)
   bca_server("bca_module", global_excel_format_reactive = selected_global_excel_format)
+  mtt_server("mtt_module", global_excel_format_reactive = selected_global_excel_format)
 }
 
 shinyApp(ui = ui, server = server)

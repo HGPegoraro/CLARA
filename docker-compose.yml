@@ -1,0 +1,10 @@
+services:
+  clara:
+    image: ghcr.io/hgpegoraro/clara:latest   # prebuilt image (see .github/workflows)
+    build: .                                  # fallback: build locally from this repo
+    ports:
+      - "3838:3838"
+    volumes:
+      # Normality-diagnosis PNGs appear in this folder next to the launcher
+      - ./CLARA_output:/app/normality_diagnosis
+    restart: "no"
