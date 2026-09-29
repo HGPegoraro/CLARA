@@ -4,29 +4,29 @@ CLARA is a program designed to assist in the analysis and visualization of ELISA
 #
 ### Installing and Using the application
 
-1. Open Windows `PowerShell` as an administrator to install the `.R`, `RStudio`, and `Rtools` applications
-```
-winget install --id=RProject.R --version 4.5.1 -e --wait; winget install --id=Posit.RStudio --version 2025.05.1+513  -e --wait; winget install --id=RProject.Rtools --version 4.5.6608 -e --wait
+You only need to install one program (Docker Desktop). No R, RStudio or Rtools.
 
-```
+1. **Install Docker Desktop** from https://www.docker.com/products/docker-desktop/ and open it.
+   Accept the terms and wait until it says Docker is running. On Windows you may be asked to restart the computer the first time.
+2. **Download CLARA**: on this page click **Code → Download ZIP**. Right-click the file and choose **Extract All**, then move the folder somewhere simple, like Documents.
+3. **Start CLARA**: open the folder and double-click `Start_CLARA.bat`.
+   Mac/Linux: open Terminal in the folder and run `bash start_CLARA.sh`.
 
->[!NOTE]
->If you already have the `.R` installed, download only `Rtools`
->```
-> winget install --id=RProject.Rtools --version 4.5.6608 -e
->``` 
+The first launch downloads CLARA and takes a few minutes. After that it starts in seconds.
+Your browser opens CLARA automatically. If it doesn't, go to http://localhost:3838.
+To stop CLARA, close the black window (or press Ctrl+C).
 
-2. Creates a `Analise_R` directory, installs the `.zip`, opens that directory containing the application and installs necessary libraries
-```
-$DesktopPATH = [System.Environment]::GetFolderPath('Desktop'); $ProjectPath = Join-Path -Path $DesktopPATH -ChildPath "Analise_R"; mkdir $ProjectPath -ErrorAction SilentlyContinue; $ZipFilePath = Join-Path -Path $ProjectPath -ChildPath "CLARA.zip"; Invoke-WebRequest -Uri https://github.com/HGPegoraro/CLARA/archive/refs/heads/main.zip -OutFile $ZipFilePath; Expand-Archive -Path $ZipFilePath -DestinationPath $ProjectPath -Force; cd (Join-Path -Path $ProjectPath -ChildPath "CLARA-main"); cd .\main; Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process; .\SETUP_CLARA.ps1
-```
+> **Windows warning:** if you see "Windows protected your PC", click **More info → Run anyway**.
 
-3. Runs the program.
-```
-Rscript -e "shiny::runApp('05_app.R', launch.browser = TRUE)"
-```
-#
-To open the program again after closing `Windows Powershell`
-```
-$DesktopPATH = [System.Environment]::GetFolderPath('Desktop'); $ProjectPath = Join-Path -Path $DesktopPATH -ChildPath "Analise_R"; cd (Join-Path -Path $ProjectPath -ChildPath "CLARA-main"); cd .\main; Rscript -e "shiny::runApp('05_app.R', launch.browser = TRUE)"
-```
+### Where are my files?
+- Excel plates: you choose them from your computer inside CLARA, as usual.
+- Saved projects (.rds) and plots: downloaded by your browser, usually into the Downloads folder.
+- Normality diagnosis images: in the `CLARA_output` folder next to `Start_CLARA.bat`.
+
+### Updating
+Just start CLARA again while online. It fetches the newest version automatically.
+
+### Troubleshooting
+- **"Docker Desktop is not running"**: open Docker Desktop, wait until it says running, then start CLARA again.
+- **"port is already allocated"**: another CLARA window is still open. Close it, or restart Docker Desktop.
+- **Docker Desktop won't start on Windows**: virtualization may be turned off in the BIOS. See Docker's Windows troubleshooting page.
