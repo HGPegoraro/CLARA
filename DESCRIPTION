@@ -12,4 +12,6 @@ Imports:
 "shiny", "shinyjs", "readxl", "DT", "ggplot2", "dplyr",
 "jsonlite", "ggtext", "shinyWidgets", "digest", "tibble",
 "tidyr", "ggpattern", "emmeans", "multcomp", "multcompView",
-"sortable", "commonmark", "fBasics", "afex", "rstatix", "dunn.test"
+"sortable", "commonmark", "fBasics", "afex", "rstatix", "dunn.test",
+"knitr", "colourpicker", "car", "DescTools", "effectsize", "effsize",
+"ggpubr", "pwr", "RColorBrewer", "viridis", "plotly"

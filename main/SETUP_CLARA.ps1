@@ -41,7 +41,7 @@ if ($rPath) {
     Write-Host ""
 
     Write-Host "Executing package installation script..."
-    Rscript install_lib_CLARA.R
+    Rscript 01_install_lib_CLARA.R
     
     Write-Host "R setup finished successfully!" -ForegroundColor Cyan
 

@@ -13,30 +13,39 @@ library(sortable)
 library(ggtext)
 library(commonmark)
 library(shinyWidgets)
+library(colourpicker)
 library(digest)
 library(fBasics)
 library(afex)
 library(rstatix)
 library(dunn.test)
+library(car)
+library(DescTools)
+library(effectsize)
+library(effsize)
+library(ggpubr)
+library(pwr)
+library(RColorBrewer)
+library(viridis)
+library(plotly)
 
 elisa_tabPanel <- function(id, name = "Humoral Response") {
   ns <- NS(id)
-
   selected_wells_input_id_elisa <- ns("selected_wells")
-
+  
   estilo_js_elisa <- sprintf("
     (function() {
       let isMouseDown_elisa = false, isSelecting_elisa = true;
       const targetInputId_elisa = '%s';
-
       $(document).on('mousedown', '.elisa-module-tab .well-cell', function(e) {
-        e.preventDefault(); isMouseDown_elisa = true;
-        isSelecting_elisa = !$(this).hasClass('selected');
-        $(this).toggleClass('selected', isSelecting_elisa); return false;
+        if ($(e.target).closest('.well-plate').length > 0) {
+          e.preventDefault(); isMouseDown_elisa = true;
+          isSelecting_elisa = !$(this).hasClass('selected');
+          $(this).toggleClass('selected', isSelecting_elisa); return false;
+        }
       }).on('mouseover', '.elisa-module-tab .well-cell', function() {
         if (isMouseDown_elisa) $(this).toggleClass('selected', isSelecting_elisa);
       });
-
       $(document).on('mouseup', function(e) {
         if (isMouseDown_elisa) {
             isMouseDown_elisa = false;
@@ -47,125 +56,124 @@ elisa_tabPanel <- function(id, name = "Humoral Response") {
             Shiny.setInputValue(targetInputId_elisa, selected_elisa, {priority: 'event'});
         }
       }).on('mouseleave', '.elisa-module-tab', function () {
-          if(isMouseDown_elisa) {
-            isMouseDown_elisa = false;
-          }
+          if(isMouseDown_elisa) isMouseDown_elisa = false;
       });
     })();
   ", selected_wells_input_id_elisa)
-
+  
   tabPanel(name, class = "elisa-module-tab",
            useShinyjs(),
            tags$head(
              tags$style(HTML("
+        .elisa-outer-wrapper { display: flex; flex-direction: row; align-items: flex-start; width: 100%; margin: 0; padding: 0; }
+        .sidebar-tabs-container { width: 50px; min-width: 50px; background: #f0f0f0; border-right: 1px solid #ddd; display: flex; flex-direction: column; z-index: 1000; height: 100vh; position: sticky; top: 0; }
+        .sidebar-tab-button { width: 50px; height: 85px; background: #007bff; color: white; border: 1px solid #0056b3; cursor: pointer; font-weight: bold; writing-mode: vertical-rl; text-orientation: mixed; display: flex; align-items: center; justify-content: center; padding: 5px; font-size: 18px; margin-bottom: 5px; }
+        .sidebar-tab-button:hover { background: #0056b3; }
+        .sidebar-tab-button i { font-size: 24px; }
+        #toggle_graph_sidebar i { transform: rotate(-90deg) scaleX(-1); display: inline-block; }
+        #elisa_module-hex_code_input { font-family: monospace; }
+        .left-sidebar-container { width: 320px; min-width: 320px; max-height: 100vh; background: #f5f5f5; border-right: 1px solid #ddd; overflow-y: auto; z-index: 999; padding: 15px; box-sizing: border-box; display: none; position: sticky; top: 0; }
+        .left-sidebar-container.open { display: block; }
+        .sidebar-title { font-size: 18px; font-weight: 700; margin-bottom: 15px; }
+        .left-sidebar-container .sidebar-title { font-size: 18px; font-weight: 700; }
+        .left-sidebar-container label, .left-sidebar-container .form-group label { font-size: 13px; }
+        .elisa-main-content { flex-grow: 1; padding: 15px; min-width: 0; }
         .elisa-module-tab .well-plate { border-collapse: collapse; margin: 10px 0; }
-        .elisa-module-tab .well-cell {
-          border: 1px solid #ccc;
-          width: 65px;
-          height: 60px;
-          text-align: center;
-          vertical-align: middle;
-          font-size: 11px;
-          font-weight: bold;
-          user-select: none;
-          padding: 2px;
-          white-space: normal;
-        }
-        .elisa-module-tab .well-cell small {
-          font-size: 9px;
-          font-weight: normal;
-        }
+        .elisa-module-tab .well-cell { border: 1px solid #ccc; width: 65px; height: 60px; text-align: center; vertical-align: middle; font-size: 11px; font-weight: bold; user-select: none; background: white; }
         .elisa-module-tab .selected { background-color: lightblue !important; }
         .elisa-module-tab .blank { background-color: lightgray !important; }
-        .elisa-module-tab table.well-plate td { cursor: pointer; }
+        .elisa-content-layout { display: flex; flex-direction: column; gap: 12px; }
       ")),
              tags$script(HTML(estilo_js_elisa))
            ),
-           sidebarLayout(
-             sidebarPanel(
-               fileInput(ns("files"), "Import Excel", multiple = TRUE, accept = ".xlsx"),
-               selectInput(ns("selected_plate"), "Select Plate", choices = list("No Plate available" = "NA")),
-               hr(),
-               radioButtons(ns("replica_mode"), "Replica Mode:",
-                            choices = list("Duplicate" = "duo", "Triplicate" = "trio"),
-                            selected = "duo"),
-               hr(),
-               tags$b("Days Configuration"),
-               textInput(ns("days_config"), label = NULL, placeholder = "Ex: Day 0, Day 21"),
-               actionButton(ns("update_days"), "Update Days List", icon = icon("sync")),
-               uiOutput(ns("days_radio_ui")),
-               hr(),
-               textInput(ns("test_type"), "Test Name", placeholder = "Ex: Total IgG"),
-               textInput(ns("group_name"), "Group", placeholder = "Ex: Group A"),
-               actionButton(ns("add_group"), "Add Group"),
-               actionButton(ns("set_blank"), "Set Blank"),
-               actionButton(ns("remove_from_group"), "Remove Selected Group", icon = icon("eraser")),
-               hr(),
-               fluidRow(
-                 column(8, fileInput(ns("load_state"), "Load Saved Project (.rds)", accept = ".rds")),
-                 column(4, downloadButton(ns("save_state"), "Save Project"))
+           div(class = "elisa-outer-wrapper",
+               div(class = "sidebar-tabs-container", id = NS(id, "sidebar_tabs_container"),
+                   actionButton(NS(id, "toggle_data_sidebar"), icon("table"), class = "sidebar-tab-button", title = "Data Options"),
+                   actionButton(NS(id, "toggle_graph_sidebar"), icon("chart-bar"), class = "sidebar-tab-button", title = "Graph Settings")
+               ),
+               div(class = "left-sidebar-container", id = NS(id, "data_sidebar_panel"),
+                   div(style = "display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;", 
+                       h5("Data Options", class = "sidebar-title"), actionButton(NS(id, "close_data_sidebar"), "✕", class = "btn-sm")),
+                   fileInput(NS(id, "files"), "Import Excel", multiple = TRUE, accept = ".xlsx"),
+                   selectInput(NS(id, "selected_plate"), "Select Plate", choices = list("No Plate available" = "NA")),
+                   hr(),
+                   radioButtons(NS(id, "replica_mode"), "Replica Mode:", choices = list("Duplicate" = "duo", "Triplicate" = "trio"), selected = "duo"),
+                   hr(),
+                   tags$b("Days Configuration"),
+                   textInput(NS(id, "days_config"), label = NULL, placeholder = "Ex: Day 0, Day 21"),
+                   actionButton(NS(id, "update_days"), "Update Days List", icon = icon("sync")),
+                   uiOutput(NS(id, "days_radio_ui")),
+                   hr(),
+                   textInput(NS(id, "test_type"), "Test Name"),
+                   textInput(NS(id, "group_name"), "Group"),
+                   actionButton(NS(id, "add_group"), "Add Group"),
+                   actionButton(NS(id, "set_blank"), "Set Blank"),
+                   actionButton(NS(id, "remove_from_group"), "Remove Selected Group", icon = icon("eraser")),
+                   hr(),
+                   fluidRow(
+                     column(6, fileInput(NS(id, "load_state"), "Load Project", accept = ".rds")),
+                     column(6, downloadButton(NS(id, "save_state"), "Save Project", style = "margin-top: 25px;"))
+                   )
+               ),
+               div(class = "left-sidebar-container", id = NS(id, "graph_sidebar_panel"),
+                   div(style = "display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;", 
+                       h5("Graph Settings", class = "sidebar-title"), actionButton(NS(id, "close_graph_sidebar"), "✕", class = "btn-sm")),
+                   uiOutput(NS(id, "test_filter_ui")),
+                   hr(),
+                   actionButton(NS(id, "refresh_graph_conditions"), "Refresh Graph Settings", icon = icon("sync"), class = "btn-sm", width = "100%"),
+                   hr(),
+                   textInput(NS(id, "plot_name"), "Graph Name"),
+                   actionButton(NS(id, "add_plot"), "Add Graph"),
+                   hr(),
+                   shinyWidgets::pickerInput(NS(id, "plot_groups"), "Select Groups", choices = list("NA"), multiple = TRUE, options = list(`live-search` = TRUE), width = '100%'),
+                   hr(),
+                   selectInput(NS(id, "selected_plot"), "Select Graph for Display", choices = list("NA")),
+                   actionButton(NS(id, "remove_plot"), "Remove Graph", icon = icon("trash"), class = "btn-danger", width = "100%"),
+                   hr(),
+                   uiOutput(NS(id, "group_order_ui")),
+                   hr(),
+                   radioButtons(NS(id, "analysis_method"), "Statistical Method:",
+                                choices = list("Integrated (Twoway-ANOVA)" = "mixed_anova", "Daily (Oneway-ANOVA)" = "anova_per_day", "Daily (Kruskal-Wallis)" = "kruskal_per_day", "t-test" = "t_test", "Welch" = "welch", "Mann-Whitney" = "mann_whitney"), selected = "mixed_anova"),
+                   hr(),
+                   radioButtons(NS(id, "signif_style"), "Significance Style:", choices = list("Letters" = "letters", "Asterisks" = "asterisks", "P-values" = "pvalues", "None" = "none"), selected = "letters"),
+                   hr(),
+                   # Axis label inputs and snapshot capture live in Graph Settings
+                   textInput(NS(id, "x_axis_label"), "X Axis Label", value = "Day"),
+                   textInput(NS(id, "y_axis_label"), "Y Axis Label", value = "Absorbance (492 nm)"),
+                   actionButton(NS(id, "capture_snapshot"), "Capture Snapshot as Final (Static)", class = "btn-primary", width = "100%"),
+                   hr(),
+                   # color picker inline for dynamic graph (moved from main area)
+                   uiOutput(NS(id, "plotly_color_picker_inline")),
+                   hr(),
+                   uiOutput(NS(id, "normality_controls_ui"))
+               ),
+               div(class = "elisa-main-content", id = NS(id, "main_content"),
+                   h4(strong("96 Well Plate & Analysis")),
+                   div(class = "elisa-content-layout",
+                       div(class = "plate-section", h5("Plate Editor"), uiOutput(ns("plate_ui")), DTOutput(ns("group_table"))),
+                       div(class = "graph-section",
+                           h5("Dynamic Graph"), uiOutput(ns("dynamic_plot_ui")),
+                           br(),
+                           h5("Final Graph"), uiOutput(ns("plots_ui")),
+                           # place for the captured static final plot
+                           uiOutput(ns("final_static_plot_ui")),
+                             # Downloads for the captured static final plot (if any)
+                             downloadButton(ns("download_final_png"), "Final PNG"),
+                             downloadButton(ns("download_final_pdf"), "Final PDF"),
+                             downloadButton(ns("download_final_tiff"), "Final TIFF")
+                       )
+                   )
                )
-             ),
-             mainPanel(
-               h4(strong("96 Well Plate")),
-               uiOutput(ns("plate_ui")),
-               DTOutput(ns("group_table")),
-               fluidRow(
-                 h4(strong("Dynamic Graph")),
-                 column(10,
-                        plotOutput(ns("dynamic_plot"))
-                 ),
-                 column(1,
-                        tags$div(style = "padding-top: 20px;",
-                                 numericInput(ns("ymax_dynamic_input"), "Y-axis Scale", value = NA_real_, min = 0.01, step = 0.1, width = "100px")
-                        )
-                 )
-               ),
-               hr(),
-               br(),
-               h4(strong("Final Graph")),
-               uiOutput(ns("plots_ui")),
-               fluidRow(
-                 column(6,
-                        uiOutput(ns("test_filter_ui")),
-                        textInput(ns("plot_name"), "Graph Name", placeholder = "Graph1"),
-                        actionButton(ns("add_plot"), "Add Graph"),
-                        hr(),
-                        shinyWidgets::pickerInput(
-                          inputId = ns("plot_groups"), label = "Select Groups for Graph",
-                          choices = list("No Groups Available" = "NA"),
-                          selected = NULL, multiple = TRUE,
-                          options = list(`live-search` = TRUE), width = '100%'
-                        )
-                 ),
-                 column(6,
-                        selectInput(ns("selected_plot"), "Select Graph for Display", choices = list("No Graph Available" = "NA")),
-                        actionButton(ns("remove_plot"), "Remove Selected Graph", icon = icon("trash"), class = "btn-danger"),
-                        uiOutput(ns("group_order_ui")),
-                        hr(),
-                        radioButtons(ns("analysis_method"), "Statistical Analysis Method:",
-                                     choices = list("Integrated Analysis (Twoway-ANOVA)" = "mixed_anova",
-                                                    "Daily Analysis (Oneway-ANOVA)" = "anova_per_day",
-                                                    "Daily Analysis (Kruskal-Wallis)" = "kruskal_per_day"
-                                     ),
-                                     selected = "mixed_anova"),
-                        hr(),
-                        radioButtons(ns("signif_style"), "Significance Style:",
-                                     choices = list("Letters" = "letters",
-                                                    "Asterisks" = "asterisks"),
-                                     selected = "letters"),
-                        hr(),
-                        h4(strong("Normality Diagnosis")),
-                        uiOutput(ns("normality_controls_ui"))
-                 )
-               ),
-               numericInput(ns("plot_width"), "Width (pixels)", value = 1200, min = 1000),
-               numericInput(ns("plot_height"), "Height (pixels)", value = 600, min = 500),
-               downloadButton(ns("download_plot_png"), "Download Final Graph (PNG)"),
-               downloadButton(ns("download_plot_pdf"), "Download Final Graph (PDF)"),
-               downloadButton(ns("download_plot_tiff"), "Download Final Graph (TIFF)")
-             )
-           )
+           ),
+           tags$script(HTML(sprintf("
+             $(document).ready(function() {
+               var dataPanel = $('#%s'), graphPanel = $('#%s');
+               function reset() { dataPanel.removeClass('open'); graphPanel.removeClass('open'); }
+               $('#%s').on('click', function() { let o = dataPanel.hasClass('open'); reset(); if(!o) dataPanel.addClass('open'); });
+               $('#%s').on('click', function() { let o = graphPanel.hasClass('open'); reset(); if(!o) graphPanel.addClass('open'); });
+               $('#%s, #%s').on('click', reset);
+             });
+           ", ns("data_sidebar_panel"), ns("graph_sidebar_panel"), ns("toggle_data_sidebar"), ns("toggle_graph_sidebar"), ns("close_data_sidebar"), ns("close_graph_sidebar"))))
   )
 }
 
@@ -173,6 +181,10 @@ elisa_server <- function(id, global_excel_format_reactive) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
+    plotly_group_colors <- reactiveVal(list())
+    unsaved_changes <- reactiveVal(FALSE)
+    project_file_path <- reactiveVal(NULL)
+    
     well_names_fixed <- function() {
       rows <- LETTERS[1:8]
       cols <- 1:12
@@ -219,16 +231,29 @@ elisa_server <- function(id, global_excel_format_reactive) {
         groups = selected_groups_rv(),
         order = input$group_order,
         test = if (!is.null(input$test_filter) && input$test_filter != "All") input$test_filter else NULL,
-        ymax = if (is.na(input$ymax_dynamic_input) || !is.numeric(input$ymax_dynamic_input) || input$ymax_dynamic_input <= 0) NULL else input$ymax_dynamic_input,
         replica_mode = input$replica_mode,
         analysis_method = input$analysis_method,
-        signif_style = input$signif_style
+        signif_style = input$signif_style,
+        color_scheme = input$color_scheme
       )
     })
+
+    plot_group_colors <- reactiveVal(list())
+    # token to force re-render of plots when interactive plotly colors change
+    plot_color_token <- reactiveVal(0)
+    # reactive container to hold a user-captured static ggplot snapshot
+    final_plot_gg <- reactiveVal(NULL)
 
     observeEvent(input$plot_groups, {
       selected_groups_rv(input$plot_groups)
     }, ignoreNULL = FALSE)
+
+    output$color_custom_ui <- renderUI({
+      # Custom color scheme removed - only color wheel/picker is available
+      return(NULL)
+    })
+
+    
 
     italicize_markdown <- function(text) {
       sapply(text, function(t) {
@@ -501,7 +526,7 @@ elisa_server <- function(id, global_excel_format_reactive) {
       new_plot_id <- paste0("plot_", digest::digest(list(input$plot_name, Sys.time(), runif(1)), algo = "crc32"))
       new_plot_config <- list(
         name = input$plot_name, id = new_plot_id, groups = params_to_save$groups, order = params_to_save$order,
-        test = params_to_save$test, ymax = params_to_save$ymax, replica_mode = params_to_save$replica_mode,
+        test = params_to_save$test, replica_mode = params_to_save$replica_mode,
         days_order = analysis_days(),
         analysis_method = params_to_save$analysis_method,
         signif_style = params_to_save$signif_style
@@ -513,7 +538,7 @@ elisa_server <- function(id, global_excel_format_reactive) {
       showNotification(paste("Graph", input$plot_name, "added!"), type="message"); updateTextInput(session, "plot_name", value="")
     })
 
-    output$plots_ui <- renderUI({ req(input$selected_plot, input$selected_plot != "NA"); plotOutput(outputId = ns(input$selected_plot), height = "400px") })
+    output$plots_ui <- renderUI({ req(input$selected_plot, input$selected_plot != "NA"); plotly::plotlyOutput(outputId = ns(input$selected_plot), height = "600px") })
 
     observeEvent(input$load_state, {
       req(input$load_state)
@@ -535,7 +560,7 @@ elisa_server <- function(id, global_excel_format_reactive) {
       if (!loaded_analysis_method %in% c("kruskal_per_day", "anova_per_day", "mixed_anova")) { loaded_analysis_method <- "mixed_anova" }
 
       loaded_signif_style <- loaded_state$signif_style_saved %||% "letters"
-      if (!loaded_signif_style %in% c("letters", "asterisks")) { loaded_signif_style <- "letters" }
+      if (!loaded_signif_style %in% c("letters", "asterisks", "pvalues", "none")) { loaded_signif_style <- "letters" }
 
       expected_wells_cols <- c("Well"="character", "Value"="numeric", "Group"="character", "Day"="character", "Test"="character", "Plots"="character")
       if (!is.null(loaded_state$files)) {
@@ -591,24 +616,35 @@ elisa_server <- function(id, global_excel_format_reactive) {
       update_plot_groups()
       showNotification("Project Loaded.", type = "message")
     })
+    
+    # Refresh graph conditions when button clicked
+    observeEvent(input$refresh_graph_conditions, {
+      update_plot_groups()
+      plot_color_token(plot_color_token() + 1)
+      showNotification("Graph settings refreshed", type = "message", duration = 2)
+    })
 
     observe({
+      plot_color_token()  # Dependency on color token to trigger re-renders when colors change
       configs_to_plot <- plots_config()
       for (current_plot_id_short in names(configs_to_plot)) {
         local({
           current_plot_id_local <- current_plot_id_short
           config_item_plot <- configs_to_plot[[current_plot_id_local]]
-          output[[current_plot_id_local]] <- renderPlot({
+          output[[current_plot_id_local]] <- plotly::renderPlotly({
             p_drawn <- generate_custom_plot(
               groups_pure_names_custom = config_item_plot$groups, order_orig_names_custom = config_item_plot$order,
               title_custom = config_item_plot$name, test_filter_custom = config_item_plot$test,
-              custom_ymax = config_item_plot$ymax, custom_replica_mode = config_item_plot$replica_mode %||% "duo",
+              custom_replica_mode = config_item_plot$replica_mode %||% "duo",
               days_order_param = config_item_plot$days_order %||% analysis_days(),
               analysis_method_param = config_item_plot$analysis_method %||% "mixed_anova",
               signif_style_param = config_item_plot$signif_style %||% "letters"
             )
-            if (is.null(p_drawn)) { plot.new(); text(0.5, 0.5, "No Data to Plot.", cex=1.2) } else { print(p_drawn) }
-          }, height = 400)
+            if (is.null(p_drawn)) return(NULL)
+            ggplotly(p_drawn, tooltip = c("x", "y", "fill")) %>% 
+              layout(legend = list(orientation = "v"), hovermode = "closest", dragmode = "zoom") %>%
+              config(displayModeBar = TRUE, modeBarButtonsToRemove = list("pan2d", "lasso2d", "resetScale2d"))
+          })
         })
       }
     })
@@ -675,7 +711,8 @@ elisa_server <- function(id, global_excel_format_reactive) {
                                          replica_mode_param = "duo",
                                          days_order_param,
                                          analysis_method_param = "mixed_anova",
-                                         signif_style_param = "letters") {
+                                         signif_style_param = "letters",
+                                         custom_colors = list()) {
 
       cat("\n\n=========================================================\n")
       cat("--- GRAPH GENERATION:", plot_title_input, "---\n")
@@ -685,6 +722,9 @@ elisa_server <- function(id, global_excel_format_reactive) {
       if (is.null(selected_pure_group_names_input) || length(selected_pure_group_names_input) < 1) {
         return(NULL)
       }
+
+      # reference color token so this function re-executes when interactive colors change
+      plot_color_token()
 
       plot_data_filtered <- all_well_data_input
       if (!is.null(test_type_filter_input) && test_type_filter_input != "All" && test_type_filter_input != "") {
@@ -793,13 +833,63 @@ elisa_server <- function(id, global_excel_format_reactive) {
         dplyr::select(PureGroup, DisplayLabel) %>% tibble::deframe()
 
       dodge_width <- 0.9
+
+      # Determine colors for plot fill (use custom_colors if available, else fall back)
+      pgcols <- plot_group_colors() # Existing reactive
+      cat("\n--- INTERNAL PLOT GENERATION ---\n")
+      cat("Custom colors passed:", paste(names(custom_colors), "=", unlist(custom_colors), collapse=", "), "\n")
+      cat("Final order levels:", paste(final_order_levels, collapse=", "), "\n")
+      
+      if (length(custom_colors) > 0) {
+        # This combines your chosen wheel colors with the defaults
+        pgcols_tmp <- sapply(final_order_levels, function(k) {
+          color_val <- if (!is.null(custom_colors[[k]])) custom_colors[[k]] else (if (!is.null(pgcols[[k]])) pgcols[[k]] else NA_character_)
+          cat("  Group", k, "->", color_val, "\n")
+          color_val
+        }, USE.NAMES = FALSE)
+        names(pgcols_tmp) <- final_order_levels
+        pgcols <- pgcols_tmp
+        cat("Colors after merge:", paste(names(pgcols), "=", unlist(pgcols), collapse=", "), "\n")
+      }
+      
+      if (is.null(pgcols) || length(pgcols) == 0) {
+        # fallback to group_colors keyed by PureGroup_Day or default greys
+        gc <- group_colors()
+        pgcols_tmp <- sapply(final_order_levels, function(k) {
+          if (!is.null(gc[[k]])) return(gc[[k]])
+          m <- grep(paste0('^', k, '(_|$)'), names(gc), value = TRUE)
+          if (length(m) > 0) return(gc[[m[1]]])
+          return(NA_character_)
+        }, USE.NAMES = FALSE)
+        if (all(is.na(pgcols_tmp))) pgcols_tmp <- grDevices::grey.colors(length(final_order_levels), start = 0.9, end = 0.2)
+        names(pgcols_tmp) <- final_order_levels
+        pgcols <- pgcols_tmp
+      } else {
+        cols_vec <- sapply(final_order_levels, function(k) {
+          if (!is.null(pgcols[[k]])) pgcols[[k]] else NA_character_
+        }, USE.NAMES = FALSE)
+        if (all(is.na(cols_vec))) {
+          cols_vec <- grDevices::grey.colors(length(final_order_levels), start = 0.9, end = 0.2)
+        }
+        names(cols_vec) <- final_order_levels
+        pgcols <- cols_vec
+      }
+
+      # Calculate auto y-max to accommodate significance labels
+      y_max_data <- max(summary_stats_for_plot$UpperError, na.rm = TRUE)
+      n_sig_lines <- if (!is.null(stat.test) && nrow(stat.test) > 0) ceiling(nrow(stat.test) / length(unique(summary_stats_for_plot$Day))) else 0
+      # Increased margins: base 25% + 12% per significance line + 5% buffer for line rendering
+      y_margin <- y_max_data * (0.25 + (n_sig_lines * 0.12) + 0.05)
+      auto_ymax <- y_max_data + y_margin
+      if (is.na(auto_ymax) || auto_ymax <= y_max_data) auto_ymax <- y_max_data * 1.2
+
       p_final_plot <- ggplot(summary_stats_for_plot, aes(x = Day, y = MeanValue, fill = PureGroup)) +
         geom_col(position = position_dodge(width = dodge_width), color = "black", width = 0.8) +
         geom_errorbar(aes(ymin = MeanValue, ymax = UpperError, group = PureGroup),
                       position = position_dodge(width = dodge_width), width = 0.25, na.rm = TRUE) +
-        scale_fill_manual(name = "", values = setNames(grey.colors(length(final_order_levels), start = 0.9, end = 0.2), final_order_levels),
+        scale_fill_manual(name = "", values = pgcols,
                           breaks = final_order_levels, labels = legend_labels_map_plot) +
-        scale_y_continuous(limits = c(0, custom_ymax), expand = expansion(mult = c(0, 0.15))) +
+        scale_y_continuous(limits = c(0, auto_ymax), expand = expansion(mult = c(0, 0))) +
         theme_classic(base_size = 14) +
         theme(plot.title = element_markdown(hjust = 0, size = 20), legend.position = "right", legend.text = element_markdown(size = 12),
               axis.text = element_text(size = 12, color = "black"), axis.title.y = element_text(size = 12, face = "bold", margin = margin(r = 10)),
@@ -816,6 +906,11 @@ elisa_server <- function(id, global_excel_format_reactive) {
       p_final_plot <- p_final_plot + labs(title = if (!is.null(plot_title_input)) italicize_markdown(plot_title_input) else "",
                                           y = "Absorbance (492 nm)", x = NULL,
                                           caption = signif_caption)
+
+      # Calculate y_step early for both letter and asterisk styles
+      y_max_data_for_step <- max(summary_stats_for_plot$UpperError, na.rm = TRUE)
+      y_step <- y_max_data_for_step * 0.22
+      if (is.na(y_step) || y_step == 0 || y_step < 0.08) y_step <- 0.08
 
       if (!is.null(stat.test) && nrow(stat.test) > 0) {
         if (signif_style_param == "letters") {
@@ -847,59 +942,60 @@ elisa_server <- function(id, global_excel_format_reactive) {
                 PureGroup = factor(PureGroup, levels = final_order_levels)
               )
 
-            p_final_plot <- p_final_plot + geom_text(data = summary_with_signif, aes(label = Signif, y = UpperError, group = PureGroup),
+            p_final_plot <- p_final_plot + geom_text(data = summary_with_signif, aes(label = Signif, y = UpperError + (y_step * 0.4), group = PureGroup),
                                                      position = position_dodge(width = dodge_width),
-                                                     vjust = -0.5, size = 5, fontface = "bold", na.rm = TRUE, show.legend = FALSE)
+                                                     vjust = 0, size = 5, fontface = "bold", na.rm = TRUE, show.legend = FALSE)
           }
 
         } else {
-          p_col_name <- if("p.adj" %in% names(stat.test)) "p.adj" else "p.value"
-          stat.test_filtered <- stat.test %>% filter(.data[[p_col_name]] < 0.05)
+          # handle non-letter significance styles: asterisks, p-values, or none
+          if (signif_style_param != "none") {
+            p_col_name <- if("p.adj" %in% names(stat.test)) "p.adj" else "p.value"
+            stat.test_filtered <- stat.test %>% filter(.data[[p_col_name]] < 0.05)
 
-          if(nrow(stat.test_filtered) > 0) {
-            n_groups <- length(final_order_levels)
-            x_coords <- summary_stats_for_plot %>%
-              mutate(
-                day_num = as.numeric(Day),
-                group_num = as.numeric(factor(PureGroup, levels = final_order_levels))
-              ) %>%
-              mutate(
-                x_pos = day_num - (dodge_width/2) + ((group_num - 0.5) * dodge_width / n_groups)
-              ) %>%
-              dplyr::select(Day, PureGroup, x_pos)
+            if(nrow(stat.test_filtered) > 0) {
+              n_groups <- length(final_order_levels)
+              x_coords <- summary_stats_for_plot %>%
+                mutate(
+                  day_num = as.numeric(Day),
+                  group_num = as.numeric(factor(PureGroup, levels = final_order_levels))
+                ) %>%
+                mutate(
+                  x_pos = day_num - (dodge_width/2) + ((group_num - 0.5) * dodge_width / n_groups)
+                ) %>%
+                dplyr::select(Day, PureGroup, x_pos)
 
-            y_max_overall <- max(summary_stats_for_plot$UpperError, na.rm = TRUE)
-            y_step <- y_max_overall * 0.08
-            if (is.na(y_step) || y_step == 0 || y_step < 0.05) y_step <- 0.05
+              # y_step already calculated at the beginning for consistent spacing
 
-            y_positions <- summary_stats_for_plot %>%
-              group_by(Day) %>%
-              summarise(max_y = max(UpperError, na.rm = TRUE)) %>%
-              ungroup()
+              y_positions <- summary_stats_for_plot %>%
+                group_by(Day) %>%
+                summarise(max_y = max(UpperError, na.rm = TRUE)) %>%
+                ungroup()
 
-            signif_final <- stat.test_filtered %>%
-              left_join(x_coords, by = c("Day", "group1" = "PureGroup")) %>% rename(xmin = x_pos) %>%
-              left_join(x_coords, by = c("Day", "group2" = "PureGroup")) %>% rename(xmax = x_pos) %>%
-              left_join(y_positions, by = "Day") %>%
-              filter(!is.na(xmin), !is.na(xmax)) %>%
-              arrange(Day, xmax - xmin) %>%
-              group_by(Day) %>%
-              mutate(
-                y.position = max_y + (row_number() * y_step),
-                label = case_when(
-                  .data[[p_col_name]] < 0.001 ~ "***",
-                  .data[[p_col_name]] < 0.01  ~ "**",
-                  TRUE ~ "*"
-                )
-              ) %>%
-              ungroup()
+              signif_final <- stat.test_filtered %>%
+                left_join(x_coords, by = c("Day", "group1" = "PureGroup")) %>% rename(xmin = x_pos) %>%
+                left_join(x_coords, by = c("Day", "group2" = "PureGroup")) %>% rename(xmax = x_pos) %>%
+                left_join(y_positions, by = "Day") %>%
+                filter(!is.na(xmin), !is.na(xmax)) %>%
+                arrange(Day, xmax - xmin) %>%
+                group_by(Day) %>%
+                mutate(
+                  y.position = max_y + (row_number() * y_step),
+                  label = if (signif_style_param == "pvalues") sprintf("% .3g", .data[[p_col_name]]) else case_when(
+                    .data[[p_col_name]] < 0.001 ~ "***",
+                    .data[[p_col_name]] < 0.01  ~ "**",
+                    TRUE ~ "*"
+                  )
+                ) %>%
+                ungroup()
 
-            if(nrow(signif_final)>0){
-              p_final_plot <- p_final_plot +
-                geom_segment(data = signif_final, aes(x = xmin, xend = xmax, y = y.position, yend = y.position), inherit.aes = FALSE) +
-                geom_segment(data = signif_final, aes(x = xmin, xend = xmin, y = y.position, yend = y.position - (y_step * 0.1)), inherit.aes = FALSE) +
-                geom_segment(data = signif_final, aes(x = xmax, xend = xmax, y = y.position, yend = y.position - (y_step * 0.1)), inherit.aes = FALSE) +
-                geom_text(data = signif_final, aes(x = (xmin + xmax) / 2, y = y.position, label = label), vjust = -0.3, size = 6, inherit.aes = FALSE)
+              if(nrow(signif_final)>0){
+                p_final_plot <- p_final_plot +
+                  geom_segment(data = signif_final, aes(x = xmin, xend = xmax, y = y.position, yend = y.position), inherit.aes = FALSE, size = 0.6) +
+                  geom_segment(data = signif_final, aes(x = xmin, xend = xmin, y = y.position, yend = y.position - (y_step * 0.25)), inherit.aes = FALSE, size = 0.6) +
+                  geom_segment(data = signif_final, aes(x = xmax, xend = xmax, y = y.position, yend = y.position - (y_step * 0.25)), inherit.aes = FALSE, size = 0.6) +
+                  geom_text(data = signif_final, aes(x = (xmin + xmax) / 2, y = y.position + (y_step * 0.45), label = label), vjust = 0, size = 4, inherit.aes = FALSE)
+              }
             }
           }
         }
@@ -1002,14 +1098,14 @@ elisa_server <- function(id, global_excel_format_reactive) {
       do.call(rbind, corrected_data_list)
     }
 
-    generate_dynamic_plot <- function(selected_pure_group_names_dyn, group_order_orig_names_dyn, plot_title_dyn, test_type_filter_dyn, custom_ymax_dyn = NULL, custom_replica_mode_dyn = "duo", analysis_method_param_dyn = "mixed_anova", signif_style_param_dyn = "letters") {
+    generate_dynamic_plot <- function(selected_pure_group_names_dyn, group_order_orig_names_dyn, plot_title_dyn, test_type_filter_dyn, custom_replica_mode_dyn = "duo", analysis_method_param_dyn = "mixed_anova", signif_style_param_dyn = "letters") {
       all_data_combined_dynamic <- get_corrected_data()
-      internal_plot_generation(all_data_combined_dynamic, selected_pure_group_names_dyn, group_order_orig_names_dyn, plot_title_dyn, test_type_filter_dyn, custom_ymax_dyn, custom_replica_mode_dyn, days_order_param = analysis_days(), analysis_method_param = analysis_method_param_dyn, signif_style_param = signif_style_param_dyn)
+      internal_plot_generation(all_data_combined_dynamic, selected_pure_group_names_dyn, group_order_orig_names_dyn, plot_title_dyn, test_type_filter_dyn, custom_ymax = NULL, custom_replica_mode_dyn, days_order_param = analysis_days(), analysis_method_param = analysis_method_param_dyn, signif_style_param = signif_style_param_dyn, custom_colors = plotly_group_colors())
     }
 
-    generate_custom_plot <- function(groups_pure_names_custom, order_orig_names_custom, title_custom, test_filter_custom, custom_ymax = NULL, custom_replica_mode = "duo", days_order_param, analysis_method_param = "mixed_anova", signif_style_param = "letters") {
+    generate_custom_plot <- function(groups_pure_names_custom, order_orig_names_custom, title_custom, test_filter_custom, custom_replica_mode = "duo", days_order_param, analysis_method_param = "mixed_anova", signif_style_param = "letters") {
       all_data_combined_custom <- get_corrected_data()
-      internal_plot_generation(all_data_combined_custom, groups_pure_names_custom, order_orig_names_custom, title_custom, test_filter_custom, custom_ymax, custom_replica_mode, days_order_param = days_order_param, analysis_method_param = analysis_method_param, signif_style_param = signif_style_param)
+      internal_plot_generation(all_data_combined_custom, groups_pure_names_custom, order_orig_names_custom, title_custom, test_filter_custom, custom_ymax = NULL, custom_replica_mode, days_order_param = days_order_param, analysis_method_param = analysis_method_param, signif_style_param = signif_style_param, custom_colors = plotly_group_colors())
     }
 
     output$dynamic_plot <- renderPlot({
@@ -1026,7 +1122,6 @@ elisa_server <- function(id, global_excel_format_reactive) {
         group_order_orig_names_dyn = current_plot_params$order,
         plot_title_dyn = input$plot_name,
         test_type_filter_dyn = current_plot_params$test,
-        custom_ymax_dyn = current_plot_params$ymax,
         custom_replica_mode_dyn = current_plot_params$replica_mode,
         analysis_method_param_dyn = current_plot_params$analysis_method,
         signif_style_param_dyn = current_plot_params$signif_style
@@ -1038,39 +1133,267 @@ elisa_server <- function(id, global_excel_format_reactive) {
       } else {
         print(p_drawn_dynamic)
       }
-    }, height=450)
+    }, height=500)
+
+    output$dynamic_plot_ui <- renderUI({
+      plotly::plotlyOutput(ns("dynamic_plotly"), height = "500px")
+    })
+
+    output$dynamic_plotly <- plotly::renderPlotly({
+      plot_color_token()  # Dependency on color token to trigger re-renders
+      current_plot_params <- dynamic_plot_params()
+      if(is.null(current_plot_params$groups) || length(current_plot_params$groups) == 0){
+        return(NULL)
+      }
+
+      p_drawn_dynamic <- generate_dynamic_plot(
+        selected_pure_group_names_dyn = current_plot_params$groups,
+        group_order_orig_names_dyn = current_plot_params$order,
+        plot_title_dyn = input$plot_name,
+        test_type_filter_dyn = current_plot_params$test,
+        custom_replica_mode_dyn = current_plot_params$replica_mode,
+        analysis_method_param_dyn = current_plot_params$analysis_method,
+        signif_style_param_dyn = current_plot_params$signif_style
+      )
+
+      if (is.null(p_drawn_dynamic)) return(NULL)
+      
+      # Convert ggplot to plotly with custom hover and remove download button
+      py <- ggplotly(p_drawn_dynamic, tooltip = c("x", "y", "fill")) %>% 
+        layout(legend = list(orientation = "v"), 
+               hovermode = "closest",
+               xaxis = list(title = "", zeroline = FALSE),
+               yaxis = list(title = "Absorbance (492 nm)", zeroline = FALSE),
+               dragmode = "zoom")  # Enable dragging for zoom; text annotations are natively draggable
+      
+      # Hide plotly's default camera and download buttons, add dragging mode button
+      py %>% config(displayModeBar = TRUE, modeBarButtonsToRemove = list("pan2d", "lasso2d", "resetScale2d"),
+                    toImageButtonOptions = list(format = "png", filename = "plot"))
+    })
+
+    # Capture current dynamic plot as a static ggplot (snapshot)
+    observeEvent(input$capture_snapshot, {
+      current_plot_params <- dynamic_plot_params()
+      if(is.null(current_plot_params$groups) || length(current_plot_params$groups) == 0) {
+        showNotification("No groups selected to capture.", type = "warning")
+        return()
+      }
+
+      p_drawn_dynamic <- generate_dynamic_plot(
+        selected_pure_group_names_dyn = current_plot_params$groups,
+        group_order_orig_names_dyn = current_plot_params$order,
+        plot_title_dyn = input$plot_name,
+        test_type_filter_dyn = current_plot_params$test,
+        custom_replica_mode_dyn = current_plot_params$replica_mode,
+        analysis_method_param_dyn = current_plot_params$analysis_method,
+        signif_style_param_dyn = current_plot_params$signif_style
+      )
+
+      if (is.null(p_drawn_dynamic)) {
+        showNotification("Nothing to capture.", type = "warning")
+        return()
+      }
+
+      # apply axis labels from user inputs (if provided)
+      xlab_val <- if (!is.null(input$x_axis_label) && nzchar(input$x_axis_label)) input$x_axis_label else NULL
+      ylab_val <- if (!is.null(input$y_axis_label) && nzchar(input$y_axis_label)) input$y_axis_label else NULL
+
+      p_final_snapshot <- p_drawn_dynamic + labs(x = xlab_val, y = ylab_val)
+      final_plot_gg(p_final_snapshot)
+      showNotification("Snapshot captured as Final Graph.", type = "message")
+    })
+
+    output$final_static_plot_ui <- renderUI({
+      if (is.null(final_plot_gg())) return(NULL)
+      plotOutput(ns("final_static_plot"), height = "600px")
+    })
+
+    output$final_static_plot <- renderPlot({
+      p <- final_plot_gg()
+      req(p)
+      print(p)
+    }, height = 600)
+
+    # Download handlers for the captured static plot
+    output$download_final_png <- downloadHandler(
+      filename = function() { paste0("FinalPlot_", Sys.Date(), ".png") },
+      content = function(file) {
+        p <- final_plot_gg()
+        req(p)
+        ggplot2::ggsave(filename = file, plot = p, device = "png", width = 10, height = 7, units = "in", dpi = 300)
+      }
+    )
+
+    output$download_final_pdf <- downloadHandler(
+      filename = function() { paste0("FinalPlot_", Sys.Date(), ".pdf") },
+      content = function(file) {
+        p <- final_plot_gg()
+        req(p)
+        ggplot2::ggsave(filename = file, plot = p, device = "pdf", width = 10, height = 7, units = "in")
+      }
+    )
+
+    output$download_final_tiff <- downloadHandler(
+      filename = function() { paste0("FinalPlot_", Sys.Date(), ".tiff") },
+      content = function(file) {
+        p <- final_plot_gg()
+        req(p)
+        ggplot2::ggsave(filename = file, plot = p, device = "tiff", width = 10, height = 7, units = "in", dpi = 300)
+      }
+    )
 
     observeEvent(input$selected_plot, {})
 
-    create_download_plot <- function(format_type = "png") {
-      downloadHandler(
-        filename = function() {
-          req(input$selected_plot, input$selected_plot != "NA")
-          dl_config <- plots_config()[[input$selected_plot]]
-          req(dl_config)
-          dl_base_name <- gsub("[^A-Za-z0-9_-]", "_", dl_config$name)
-          paste0(dl_base_name %||% "saved_plot", "_", Sys.Date(), ".", format_type)
-        },
-        content = function(file) {
-          req(input$selected_plot, input$selected_plot != "NA")
-          dl_content_config <- plots_config()[[input$selected_plot]]
-          req(dl_content_config)
-          p_dl <- generate_custom_plot(
-            dl_content_config$groups, dl_content_config$order, dl_content_config$name, dl_content_config$test,
-            dl_content_config$ymax, dl_content_config$replica_mode %||% "duo",
-            days_order_param = dl_content_config$days_order %||% analysis_days(),
-            analysis_method_param = dl_content_config$analysis_method %||% "mixed_anova",
-            signif_style_param = dl_content_config$signif_style %||% "letters"
-          )
-          req(p_dl)
-          plot_w_px <- input$plot_width %||% 1000; plot_h_px <- input$plot_height %||% 500
-          ggsave(file, plot = p_dl, device = format_type,
-                 width = plot_w_px / 96, height = plot_h_px / 96, dpi = 300, units = "in", bg = "white")
-        }
+    # 1. Improved Color Picker UI (The Wheel)
+    # 1. Fixed Color Picker UI (The Wheel)
+    
+
+    # Duplicate the color picker inline so it's visible next to the dynamic graph
+    output$plotly_color_picker_inline <- renderUI({
+      groups_available <- get_group_names()
+      if (length(groups_available) == 0) return(NULL)
+      pure_group_names <- remove_asterisks(remove_html(groups_available))
+      tagList(
+        h5("Individual Colors (Inline)"),
+        selectInput(ns("selected_color_group"), "Select Column:", choices = setNames(pure_group_names, groups_available)),
+        colourpicker::colourInput(ns("color_wheel"), "Pick Color:", value = "#1f77b4", showColour = "background", palette = "square", returnName = FALSE),
+        actionButton(ns("apply_picker_color"), "Apply to Selected Column", class = "btn-primary", width = "100%"),
+        hr(),
+        h5("Palette Presets"),
+        p(style = "font-size: 12px; color: #666;", "Apply a palette to all columns at once:"),
+        div(style = "display: grid; grid-template-columns: 1fr 1fr; gap: 8px;",
+            actionButton(ns("preset_viridis"), "Viridis", class = "btn-sm btn-info", width = "100%", title = "Perceptually uniform"),
+            actionButton(ns("preset_cb"), "Colorblind", class = "btn-sm btn-info", width = "100%", title = "Blue-Orange friendly"),
+            actionButton(ns("preset_tableau"), "Tableau", class = "btn-sm btn-info", width = "100%", title = "Professional"),
+            actionButton(ns("preset_material"), "Material", class = "btn-sm btn-info", width = "100%", title = "Modern vibrant")
+        ),
+        br(),
+        actionButton(ns("reset_colors"), "Reset All Colors", class = "btn-sm", width = "100%")
       )
-    }
-    output$download_plot_png  <- create_download_plot(format_type = "png")
-    output$download_plot_pdf  <- create_download_plot(format_type = "pdf")
-    output$download_plot_tiff <- create_download_plot(format_type = "tiff")
+    })
+    
+    # 2. Color Application Logic
+    
+    # Apply individual color to selected column
+    observeEvent(input$apply_picker_color, {
+      if (is.null(input$selected_color_group) || input$selected_color_group == "") {
+        showNotification("Please select a column first", type = "warning")
+        return()
+      }
+      if (is.null(input$color_wheel) || input$color_wheel == "") {
+        showNotification("Please select a color first", type = "warning")
+        return()
+      }
+      
+      current_cols <- plotly_group_colors()
+      current_cols[[input$selected_color_group]] <- input$color_wheel
+      plotly_group_colors(current_cols)
+      plot_color_token(plot_color_token() + 1)
+      showNotification(paste("Color applied to", input$selected_color_group), type = "message", duration = 2)
+    })
+    
+    # Preset colors - Viridis (apply to all)
+    observeEvent(input$preset_viridis, {
+      viridis_cols <- c("#440154", "#31688e", "#35b779", "#fde724")
+      groups_available <- get_group_names()
+      if (length(groups_available) == 0) return()
+      pure_group_names <- remove_asterisks(remove_html(groups_available))
+      
+      current_cols <- plotly_group_colors()
+      for (i in seq_along(pure_group_names)) {
+        current_cols[[pure_group_names[i]]] <- viridis_cols[(i - 1) %% length(viridis_cols) + 1]
+      }
+      plotly_group_colors(current_cols)
+      plot_color_token(plot_color_token() + 1)
+      showNotification("Viridis palette applied to all columns", type = "message", duration = 2)
+    })
+    
+    # Preset colors - Colorblind friendly (apply to all)
+    observeEvent(input$preset_cb, {
+      cb_cols <- c("#0173B2", "#029E73", "#CC78BC", "#DE8F05", "#CA9161", "#56B4E9")
+      groups_available <- get_group_names()
+      if (length(groups_available) == 0) return()
+      pure_group_names <- remove_asterisks(remove_html(groups_available))
+      
+      current_cols <- plotly_group_colors()
+      for (i in seq_along(pure_group_names)) {
+        current_cols[[pure_group_names[i]]] <- cb_cols[(i - 1) %% length(cb_cols) + 1]
+      }
+      plotly_group_colors(current_cols)
+      plot_color_token(plot_color_token() + 1)
+      showNotification("Colorblind-friendly palette applied to all columns", type = "message", duration = 2)
+    })
+    
+    # Preset colors - Tableau (apply to all)
+    observeEvent(input$preset_tableau, {
+      tableau_cols <- c("#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b", "#e377c2")
+      groups_available <- get_group_names()
+      if (length(groups_available) == 0) return()
+      pure_group_names <- remove_asterisks(remove_html(groups_available))
+      
+      current_cols <- plotly_group_colors()
+      for (i in seq_along(pure_group_names)) {
+        current_cols[[pure_group_names[i]]] <- tableau_cols[(i - 1) %% length(tableau_cols) + 1]
+      }
+      plotly_group_colors(current_cols)
+      plot_color_token(plot_color_token() + 1)
+      showNotification("Tableau palette applied to all columns", type = "message", duration = 2)
+    })
+    
+    # Preset colors - Material Design (apply to all)
+    observeEvent(input$preset_material, {
+      material_cols <- c("#F44336", "#2196F3", "#4CAF50", "#FFC107", "#9C27B0", "#00BCD4", "#FF5722")
+      groups_available <- get_group_names()
+      if (length(groups_available) == 0) return()
+      pure_group_names <- remove_asterisks(remove_html(groups_available))
+      
+      current_cols <- plotly_group_colors()
+      for (i in seq_along(pure_group_names)) {
+        current_cols[[pure_group_names[i]]] <- material_cols[(i - 1) %% length(material_cols) + 1]
+      }
+      plotly_group_colors(current_cols)
+      plot_color_token(plot_color_token() + 1)
+      showNotification("Material Design palette applied to all columns", type = "message", duration = 2)
+    })
+    
+    observeEvent(input$reset_colors, {
+      plotly_group_colors(list())
+      plot_color_token(plot_color_token() + 1)
+      showNotification("All colors reset to default", type = "message", duration = 2)
+    })
+    
+    # Sync hex code input with color wheel
+    observeEvent(input$color_wheel, {
+      updateTextInput(session, "hex_code_input", value = input$color_wheel)
+    })
+    
+    # Update color wheel when hex code is manually entered
+    observeEvent(input$hex_code_input, {
+      hex_val <- input$hex_code_input
+      if (grepl("^#[0-9A-Fa-f]{6}$", hex_val)) {
+        shinyjs::runjs(sprintf("$('#%s').colourpicker('setColor', '%s');", ns("color_wheel"), hex_val))
+      }
+    })
+    
+    # Eyedropper tool - use browser's native color picker
+    observeEvent(input$eyedropper_tool, {
+      shinyjs::runjs("
+        const colorInput = document.createElement('input');
+        colorInput.type = 'color';
+        colorInput.addEventListener('change', function(e) {
+          Shiny.setInputValue('" %+% ns("color_wheel") %+% "', e.target.value);
+        });
+        colorInput.click();
+      ")
+    })
+    
+    # 3. Ensure internal_plot_generation uses these colors correctly
+    # (Inside your existing internal_plot_generation function, find the color logic:)
+    # pgcols <- plotly_group_colors() 
+    # ... and ensure it maps pgcols correctly to scale_fill_manual
+
+    
+
+    # original create_download_plot removed; final snapshot download handlers are used instead
   })
 }
